@@ -49,7 +49,7 @@ python pipe_infer.py # to evaluate a base model under random sensor placement
 python pipe_walk_infer.py # to evaluate the optimized model under optimized sensor placement
 ```
 
-Note: You need to change the coressponding arguments to your own one.
+Note: You need to change the corresponding arguments to your own ones.
 
 4. Develop your own model. Here are the instructions:
 

@@ -4,7 +4,7 @@ PhySense: Sensor Placement Optimization for Accurate Physics Sensing [[Paper]](h
 
 
 Physics sensing plays a central role in many scientific and engineering domains, which inherently involves two coupled tasks: reconstructing dense physical fields from sparse observations and optimizing scattered sensor placements to observe maximum information. While deep learning has made rapid advances in sparse-data
-reconstruction, **existing methods generally omit optimization of sensor placements, leaving the mutual enhancement between reconstruction and placement on the shel**f. To change this suboptimal practice, we propose PhySense with the following features:
+reconstruction, **existing methods generally omit optimization of sensor placements, leaving the mutual enhancement between reconstruction and placement on the shelf**. To change this suboptimal practice, we propose PhySense with the following features:
 
 - PhySense is a **synergistic two-stage framework for accurate physics sensing**, which integrates a flow-based generative reconstruction model with a sensor placement optimization strategy through **projected gradient descent to respect spatial constraints**.
 

@@ -57,9 +57,9 @@ pip install -r requirements.txt
 
 3. List of experiments:
 
-- Turbulent Flow benchmark: see [./Turbulent-Flow](https://github.com/thuml/Transolver/tree/main/Turbulent-Flow)
-- Sea Temperature benchmark: see [./Sea-Temperature](https://github.com/thuml/Transolver/tree/main/Sea-Temperature)
-- Car Aerodynamics benchmark: see [./Car-Aerodynamics](https://github.com/thuml/Transolver/tree/main/Car-Aerodynamics)
+- Turbulent Flow benchmark: see [./Turbulent-Flow](https://github.com/thuml/PhySense/tree/main/Turbulent-Flow)
+- Sea Temperature benchmark: see [./Sea-Temperature](https://github.com/thuml/PhySense/tree/main/Sea-Temperature)
+- Car Aerodynamics benchmark: see [./Car-Aerodynamics](https://github.com/thuml/PhySense/tree/main/Car-Aerodynamics)
 
 
 ## Results

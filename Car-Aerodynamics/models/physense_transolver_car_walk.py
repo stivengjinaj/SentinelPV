@@ -1,0 +1,478 @@
+import torch
+import numpy as np
+import torch.nn as nn
+from timm.models.layers import trunc_normal_
+from einops import rearrange, repeat
+import math
+
+import torch.nn.functional as F
+
+from typing import Optional
+
+
+def knn_idw_interp(
+    data: torch.Tensor,         # (B, N, C)  每个已知点的特征
+    pts: torch.Tensor,          # (N, 3)     已知点坐标
+    queries: torch.Tensor,      # (M, 3)     查询点坐标
+    k: int = 8,                 # 取最近 k 个
+    p: float = 2.0,             # 距离幂
+    mask: Optional[torch.Tensor] = None  # (N,) 1=valid
+) -> torch.Tensor:              # (B, M, C)
+    """
+    K-NN 逆距离加权插值，保持梯度。
+
+    data:   已知点特征，可为可训练参数
+    pts:    已知点坐标
+    queries:要查询的 (x,y,z)
+    k:      最近邻数量
+    p:      距离幂次，p 越大越“局部”
+    mask:   若提供，则把 mask=0 的点视为无效
+    """
+    device  = data.device
+    pts     = pts.to(device)
+    queries = queries.to(device)
+    if mask is not None:
+        mask = mask.to(device, data.dtype)              # (N,)
+
+    # 1. pair-wise 距离  (M, N)
+    d2 = torch.cdist(queries, pts, p=2) + 1e-12         # 避免除 0
+    # 2. 取最近 k 个
+    d2, idx = torch.topk(d2, k, dim=1, largest=False)   # (M, k)
+    w = 1.0 / (d2 ** (p / 2))                           # (M, k)
+
+    if mask is not None:
+        valid = mask[idx]                               # (M, k)
+        w = w * valid
+        w_sum = w.sum(dim=1, keepdim=True) + 1e-12
+        w = w / w_sum
+    else:
+        w = w / w.sum(dim=1, keepdim=True)
+
+    # 3. 加权求和
+    
+    # print(data.shape)
+    
+    feat_k = data[idx, :]                            # (M, k, C)
+    w = w.unsqueeze(-1)                    # ( M, k, 1)
+    out = (feat_k * w).sum(dim=1)                      # ( M, C)
+    return out
+
+
+
+ACTIVATION = {'gelu': nn.GELU, 'tanh': nn.Tanh, 'sigmoid': nn.Sigmoid, 'relu': nn.ReLU, 'leaky_relu': nn.LeakyReLU(0.1),
+              'softplus': nn.Softplus, 'ELU': nn.ELU, 'silu': nn.SiLU}
+
+def pair(t):
+    return t if isinstance(t, tuple) else (t, t)
+
+def modulate(x, shift, scale):
+    return x * (1 + scale) + shift
+
+class TimestepEmbedder(nn.Module):
+    """
+    Embeds scalar timesteps into vector representations.
+    """
+    def __init__(self, hidden_size, frequency_embedding_size=256):
+        super().__init__()
+        self.mlp = nn.Sequential(
+            nn.Linear(frequency_embedding_size, hidden_size, bias=True),
+            nn.SiLU(),
+            nn.Linear(hidden_size, hidden_size, bias=True),
+        )
+        self.frequency_embedding_size = frequency_embedding_size
+
+    @staticmethod
+    def timestep_embedding(t, dim, max_period=10000):
+        """
+        Create sinusoidal timestep embeddings.
+        :param t: a 1-D Tensor of N indices, one per batch element.
+                          These may be fractional.
+        :param dim: the dimension of the output.
+        :param max_period: controls the minimum frequency of the embeddings.
+        :return: an (N, D) Tensor of positional embeddings.
+        """
+        # https://github.com/openai/glide-text2im/blob/main/glide_text2im/nn.py
+        half = dim // 2
+        freqs = torch.exp(
+            -math.log(max_period) * torch.arange(start=0, end=half, dtype=torch.float32) / half
+        ).to(device=t.device)
+        args = t[:, None].float() * freqs[None]
+        embedding = torch.cat([torch.cos(args), torch.sin(args)], dim=-1)
+        # print(embedding.shape)
+        if dim % 2:
+            embedding = torch.cat([embedding, torch.zeros_like(embedding[..., -1:])], dim=-1)
+            # print(embedding.shape)
+        return embedding
+
+    def forward(self, t):
+        t_freq = self.timestep_embedding(t, self.frequency_embedding_size)
+        # print(t_freq.shape)
+        t_emb = self.mlp(t_freq)
+        return t_emb
+    
+
+class Physics_Attention_Irregular_Mesh(nn.Module):
+    def __init__(self, dim, heads=8, dim_head=64, dropout=0., slice_num=64):
+        super().__init__()
+        inner_dim = dim_head * heads
+        self.dim_head = dim_head
+        self.heads = heads
+        self.scale = dim_head ** -0.5
+        self.softmax = nn.Softmax(dim=-1)
+        self.dropout = nn.Dropout(dropout)
+        self.temperature = nn.Parameter(torch.ones([1, heads, 1, 1]) * 0.5)
+
+        self.in_project_x = nn.Linear(dim, inner_dim)
+        self.in_project_fx = nn.Linear(dim, inner_dim)
+        self.in_project_slice = nn.Linear(dim_head, slice_num)
+        for l in [self.in_project_slice]:
+            torch.nn.init.orthogonal_(l.weight)  # use a principled initialization
+        self.to_q = nn.Linear(dim_head, dim_head, bias=False)
+        self.to_k = nn.Linear(dim_head, dim_head, bias=False)
+        self.to_v = nn.Linear(dim_head, dim_head, bias=False)
+        self.to_out = nn.Sequential(
+            nn.Linear(inner_dim, dim),
+            nn.Dropout(dropout)
+        )
+
+    def forward(self, x):
+        # B N C
+        B, N, C = x.shape
+
+        ### (1) Slice
+        fx_mid = self.in_project_fx(x).reshape(B, N, self.heads, self.dim_head) \
+            .permute(0, 2, 1, 3).contiguous()  # B H N C
+        x_mid = self.in_project_x(x).reshape(B, N, self.heads, self.dim_head) \
+            .permute(0, 2, 1, 3).contiguous()  # B H N C
+        slice_weights = self.softmax(self.in_project_slice(x_mid) / self.temperature)  # B H N G
+        slice_norm = slice_weights.sum(2)  # B H G
+        slice_token = torch.einsum("bhnc,bhng->bhgc", fx_mid, slice_weights)
+        slice_token = slice_token / ((slice_norm + 1e-5)[:, :, :, None].repeat(1, 1, 1, self.dim_head))
+
+        ### (2) Attention among slice tokens
+        q_slice_token = self.to_q(slice_token)
+        k_slice_token = self.to_k(slice_token)
+        v_slice_token = self.to_v(slice_token)
+        
+        out_slice_token = F.scaled_dot_product_attention(q_slice_token, k_slice_token, v_slice_token, dropout_p=0.1 if self.training else 0.0)
+
+        ### (3) Deslice
+        out_x = torch.einsum("bhgc,bhng->bhnc", out_slice_token, slice_weights)
+        out_x = rearrange(out_x, 'b h n d -> b n (h d)')
+        return self.to_out(out_x)
+
+class FeedForward(nn.Module):
+    def __init__(self, dim, hidden_dim, dropout = 0.):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(dim, hidden_dim),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, dim),
+            nn.Dropout(dropout)
+        )
+    def forward(self, x):
+        return self.net(x)
+    
+class CrossAttention(nn.Module):
+    def __init__(self, dim, heads = 8, dim_head = 64, dropout = 0.):
+        super().__init__()
+        inner_dim = dim_head *  heads
+        project_out = not (heads == 1 and dim_head == dim)
+
+        self.heads = heads
+        self.scale = dim_head ** -0.5
+
+        self.attend = nn.Softmax(dim = -1)
+        self.dropout = nn.Dropout(dropout)
+        
+        self.to_q = nn.Linear(dim, inner_dim, bias = False)
+        self.to_kv = nn.Linear(dim, inner_dim * 2, bias = False)
+
+        self.to_out = nn.Sequential(
+            nn.Linear(inner_dim, dim),
+            nn.Dropout(dropout)
+        ) if project_out else nn.Identity()
+
+    def forward(self, x, s):
+        
+        q = self.to_q(x)
+        q = rearrange(q, 'b n (h d) -> b h n d', h = self.heads)
+        
+        kv = self.to_kv(s).chunk(2, dim = -1)
+        k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h = self.heads), kv)
+
+        out = F.scaled_dot_product_attention(q, k, v, dropout_p=0.1 if self.training else 0.0)
+        out = rearrange(out, 'b h n d -> b n (h d)')
+        return self.to_out(out) 
+
+
+class Transformer(nn.Module):
+    def __init__(self, dim, depth, heads, dim_head, mlp_dim, slice_num, dropout = 0.):
+        super().__init__()
+        self.layers_x = nn.ModuleList([])
+        self.layers_c = nn.ModuleList([])
+        for _ in range(depth):
+            self.layers_x.append(nn.ModuleList([
+                CrossAttention(dim, heads = heads // 2, dim_head = dim_head, dropout = dropout),
+                FeedForward(dim, mlp_dim, dropout = dropout),
+                Physics_Attention_Irregular_Mesh(dim, heads=heads, dim_head=dim_head,
+                                                     dropout=dropout, slice_num=slice_num),
+                FeedForward(dim, mlp_dim, dropout = dropout),
+                nn.Sequential(
+                    nn.SiLU(),
+                    nn.Linear(dim//4, 6 * dim, bias=True)
+                ),
+                nn.LayerNorm(dim),
+                nn.LayerNorm(dim),
+                nn.Sequential(
+                    nn.SiLU(),
+                    nn.Linear(dim//4, 6 * dim, bias=True)
+                ),
+                nn.LayerNorm(dim),
+                nn.LayerNorm(dim),
+            ]))
+
+        for i in range(depth):
+            nn.init.zeros_(self.layers_x[i][4][1].weight)
+            nn.init.zeros_(self.layers_x[i][4][1].bias)
+            nn.init.zeros_(self.layers_x[i][7][1].weight)
+            nn.init.zeros_(self.layers_x[i][7][1].bias)
+                  
+    def forward(self, x, mu, s):
+        for cosattn, ff1, attn, ff2, adaLN_modulation_mu1, norm1, norm2, adaLN_modulation_mu2, norm3, norm4 in self.layers_x:
+            
+            shift_msa_mu_c, scale_msa_mu_c, gate_msa_mu_c, shift_mlp_mu_c, scale_mlp_mu_c, gate_mlp_mu_c = adaLN_modulation_mu1(mu).chunk(6, dim=-1)
+            x_cosattn = cosattn(modulate(norm1(x), shift_msa_mu_c, scale_msa_mu_c), s)
+            x = x + gate_msa_mu_c * x_cosattn
+            x = x + gate_mlp_mu_c * ff1(modulate(norm2(x), shift_mlp_mu_c, scale_mlp_mu_c))
+            
+            shift_msa_mu, scale_msa_mu, gate_msa_mu, shift_mlp_mu, scale_mlp_mu, gate_mlp_mu = adaLN_modulation_mu2(mu).chunk(6, dim=-1)
+            x_attn = attn(modulate(norm3(x), shift_msa_mu, scale_msa_mu))
+            x = x + gate_msa_mu * x_attn
+            x = x + gate_mlp_mu * ff2(modulate(norm4(x), shift_mlp_mu, scale_mlp_mu))
+        return x
+    
+class FinalLayer(nn.Module):
+    def __init__(self, hidden_size, out_channels):
+        super().__init__()
+        self.norm_final = nn.LayerNorm(hidden_size, elementwise_affine=False, eps=1e-6)
+        self.mlp = nn.Sequential(
+            nn.Linear(hidden_size, hidden_size),
+            nn.GELU(),
+            nn.Linear(hidden_size, out_channels, bias=True),
+        )
+        self.adaLN_modulation_mu = nn.Sequential(
+            nn.SiLU(),
+            nn.Linear(hidden_size//4, 2 * hidden_size, bias=True)
+        )
+
+        nn.init.constant_(self.adaLN_modulation_mu[-1].weight, 0)
+        nn.init.constant_(self.adaLN_modulation_mu[-1].bias, 0)
+        nn.init.constant_(self.mlp[2].weight, 0)
+        nn.init.constant_(self.mlp[2].bias, 0)
+
+    def forward(self, x, mu):
+        shift_mu, scale_mu = self.adaLN_modulation_mu(mu).chunk(2, dim=-1)
+        x = modulate(self.norm_final(x), shift_mu, scale_mu)
+        x = self.mlp(x)
+        return x
+
+
+class Model(nn.Module):
+    def __init__(self,
+                 space_dim=1,
+                 n_layers=8,
+                 n_hidden=256,
+                 dropout=0,
+                 n_head=8,
+                 act='gelu',
+                 mlp_ratio=1,
+                 fun_dim=1,
+                 out_dim=1,
+                 slice_num=32,
+                 ref=4,
+                 unified_pos=True
+                 ):
+        super(Model, self).__init__()
+        self.__name__ = 'Transolver'
+        self.ref = ref
+        self.unified_pos = unified_pos
+        if self.unified_pos:
+            self.preprocess = nn.Sequential(
+                nn.LayerNorm(4 + self.ref * self.ref * self.ref),
+                nn.Linear(4 + self.ref * self.ref * self.ref, n_hidden),
+                nn.LayerNorm(n_hidden),
+        )
+        # else:
+        #     self.preprocess = MLP(fun_dim + space_dim, n_hidden * 2, n_hidden, n_layers=0, res=False, act=act)
+
+        self.n_hidden = n_hidden
+        self.space_dim = space_dim
+        
+        
+        self.sensor_encoder = nn.Sequential(
+            nn.Linear(4, n_hidden),
+            nn.LayerNorm(n_hidden),
+        )
+        
+        self.sensor_encoder_2 = nn.Sequential(
+            nn.Linear(4, n_hidden // 4),
+            nn.LayerNorm(n_hidden // 4),
+        )
+        
+        self.t_embedder = TimestepEmbedder(n_hidden // 4, frequency_embedding_size=n_hidden // 4)
+        # self.v_embedder = TimestepEmbedder(n_hidden // 4, frequency_embedding_size=n_hidden // 4)
+        # self.a_embedder = TimestepEmbedder(n_hidden // 4, frequency_embedding_size=n_hidden // 4)
+
+        
+        self.transformer = Transformer(n_hidden, n_layers, n_head, n_head, n_hidden, slice_num, dropout)
+        self.mlp_head = FinalLayer(n_hidden, out_channels=out_dim)
+        self.placeholder = nn.Parameter((1 / (n_hidden)) * torch.rand(n_hidden, dtype=torch.float))
+
+
+    def get_grid(self, my_pos):
+        # my_pos 1 N 3
+        batchsize = my_pos.shape[0]
+
+        gridx = torch.tensor(np.linspace(-1.8, 1.8, self.ref), dtype=torch.float)
+        gridx = gridx.reshape(1, self.ref, 1, 1, 1).repeat([batchsize, 1, self.ref, self.ref, 1])
+        gridy = torch.tensor(np.linspace(0, 1.6, self.ref), dtype=torch.float)
+        gridy = gridy.reshape(1, 1, self.ref, 1, 1).repeat([batchsize, self.ref, 1, self.ref, 1])
+        gridz = torch.tensor(np.linspace(0, 1, self.ref), dtype=torch.float)
+        gridz = gridz.reshape(1, 1, 1, self.ref, 1).repeat([batchsize, self.ref, self.ref, 1, 1])
+        grid_ref = torch.cat((gridx, gridy, gridz), dim=-1).cuda().reshape(batchsize, self.ref ** 3, 3)  # B 4 4 4 3
+
+        pos = torch.sqrt(
+            torch.sum((my_pos[:, :, None, :] - grid_ref[:, None, :, :]) ** 2,
+                      dim=-1)). \
+            reshape(batchsize, my_pos.shape[1], self.ref * self.ref * self.ref).contiguous()
+        return pos
+
+
+    def get_grid_wobatch(self, my_pos):
+        # my_pos N 3
+
+        gridx = torch.tensor(np.linspace(-1.8, 1.8, self.ref), dtype=torch.float)
+        gridx = gridx.reshape(self.ref, 1, 1, 1).repeat([1, self.ref, self.ref, 1])
+        gridy = torch.tensor(np.linspace(0, 1.6, self.ref), dtype=torch.float)
+        gridy = gridy.reshape(1, self.ref, 1, 1).repeat([self.ref, 1, self.ref, 1])
+        gridz = torch.tensor(np.linspace(0, 1, self.ref), dtype=torch.float)
+        gridz = gridz.reshape(1, 1, self.ref, 1).repeat([self.ref, self.ref, 1, 1])
+        grid_ref = torch.cat((gridx, gridy, gridz), dim=-1).cuda().reshape(self.ref ** 3, 3)  # B 4 4 4 3
+
+        pos = torch.sqrt(
+            torch.sum((my_pos[:, None, :] - grid_ref[None, :, :]) ** 2,
+                      dim=-1)). \
+            reshape(my_pos.shape[0], self.ref * self.ref * self.ref).contiguous()
+        return pos
+
+
+    def forward(self, data):
+        
+        pos = data.pos
+        y = data.y
+        velocity = data.v
+        angle = data.angle
+       
+        # get sample
+        y = data.y
+        
+        sampled_pos = self.xyz_sens
+        
+        sampled_y = knn_idw_interp(y, pos, sampled_pos)
+        sampled_new_pos = self.get_grid_wobatch(sampled_pos)
+
+        
+        device = pos.device
+        noise = torch.randn_like(y)
+        # logit normal sampling
+        u = torch.normal(mean=0.0, std=1.0, size=(1,)).to(device)
+        t = torch.sigmoid(u)
+        
+        t_tmp = t.unsqueeze(-1).repeat(y.shape[0], y.shape[1])
+        
+        y_t =  t_tmp * y + (1.-t_tmp) * noise
+        target = y - noise
+        
+        x = torch.concat((pos, y_t), dim=-1).unsqueeze(0)
+        
+
+        if self.unified_pos:
+            new_pos = self.get_grid(data.pos[None, :, :])
+            x = torch.cat((x, new_pos), dim=-1)
+            
+
+        fx = self.preprocess(x)
+        fx = fx + self.placeholder[None, None, :]
+        
+        t = self.t_embedder(t).squeeze()
+
+        sensor_feature = torch.concat((sampled_pos, sampled_y), dim=-1).unsqueeze(0)
+        s = self.sensor_encoder(sensor_feature)
+        
+        s_2 = self.sensor_encoder_2(sensor_feature)
+        t = t + s_2.mean(dim=1).squeeze()
+        
+        x = self.transformer(fx, t, s)
+        out = self.mlp_head(x, t)[0]
+        
+        loss_criterion = nn.MSELoss(reduction='none')
+       
+        loss = loss_criterion(out, target).mean(dim=0)
+        return loss
+    
+    
+    def sample(self, data, return_pred=False, step=5, sensor_number=15):
+        
+        pos = data.pos
+        velocity = data.v
+        angle = data.angle
+        
+        y = data.y
+
+        sampled_pos = self.xyz_sens
+        
+        sampled_y = knn_idw_interp(y, pos, sampled_pos)
+        sampled_new_pos = self.get_grid_wobatch(sampled_pos)
+
+        
+        device = pos.device
+        z = torch.randn_like(y)
+       
+        N = step
+        dt = (1./N)
+        for i in range(N):
+            
+            x = torch.concat((pos, z), dim=-1).unsqueeze(0) # 1 32000 9
+            t = (torch.ones((1)) * i * dt)
+            t = t.to(device).unsqueeze(-1).repeat(y.shape[0], 1)
+
+            if self.unified_pos: # 4 * 4 by default
+                new_pos = self.get_grid(data.pos[None, :, :])
+                x = torch.cat((x, new_pos), dim=-1)       
+           
+            fx = self.preprocess(x)
+            fx = fx + self.placeholder[None, None, :]
+
+            t = self.t_embedder(t).squeeze()
+        
+            
+            sensor_feature = torch.concat((sampled_pos, sampled_y), dim=-1).unsqueeze(0)
+            s = self.sensor_encoder(sensor_feature)
+            
+            
+            s_2 = self.sensor_encoder_2(sensor_feature)
+            t = t + s_2.mean(dim=1).squeeze()
+            
+            x = self.transformer(fx, t, s)
+            out = self.mlp_head(x, t)[0]
+
+            z = z + out * dt
+
+        relative_loss = torch.norm(y-z, 2, 0) / torch.norm(y, 2, 0)
+        
+        if return_pred:
+            return relative_loss, z
+        
+        return relative_loss

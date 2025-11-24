@@ -111,8 +111,7 @@ for index in range(76, case_num + 76):
 
     text = file_path.read_text()
     m = pattern.search(text)
-    if m is None:
-        raise ValueError("未找到 flowVelocity 定义")
+
 
     vx, vy, vz = map(float, m.groups())
 

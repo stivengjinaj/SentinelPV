@@ -11,32 +11,23 @@ from typing import Optional
 
 
 def knn_idw_interp(
-    data: torch.Tensor,         # (B, N, C)  每个已知点的特征
-    pts: torch.Tensor,          # (N, 3)     已知点坐标
-    queries: torch.Tensor,      # (M, 3)     查询点坐标
-    k: int = 8,                 # 取最近 k 个
-    p: float = 2.0,             # 距离幂
+    data: torch.Tensor,         # (B, N, C)  features of known points
+    pts: torch.Tensor,          # (N, 3)     positions of known points
+    queries: torch.Tensor,      # (M, 3)     positions of quert points
+    k: int = 8,                 # the nearest k
+    p: float = 2.0,             # power
     mask: Optional[torch.Tensor] = None  # (N,) 1=valid
 ) -> torch.Tensor:              # (B, M, C)
-    """
-    K-NN 逆距离加权插值，保持梯度。
 
-    data:   已知点特征，可为可训练参数
-    pts:    已知点坐标
-    queries:要查询的 (x,y,z)
-    k:      最近邻数量
-    p:      距离幂次，p 越大越“局部”
-    mask:   若提供，则把 mask=0 的点视为无效
-    """
     device  = data.device
     pts     = pts.to(device)
     queries = queries.to(device)
     if mask is not None:
         mask = mask.to(device, data.dtype)              # (N,)
 
-    # 1. pair-wise 距离  (M, N)
-    d2 = torch.cdist(queries, pts, p=2) + 1e-12         # 避免除 0
-    # 2. 取最近 k 个
+
+    d2 = torch.cdist(queries, pts, p=2) + 1e-12         
+
     d2, idx = torch.topk(d2, k, dim=1, largest=False)   # (M, k)
     w = 1.0 / (d2 ** (p / 2))                           # (M, k)
 
@@ -48,8 +39,7 @@ def knn_idw_interp(
     else:
         w = w / w.sum(dim=1, keepdim=True)
 
-    # 3. 加权求和
-    
+
     # print(data.shape)
     
     feat_k = data[idx, :]                            # (M, k, C)

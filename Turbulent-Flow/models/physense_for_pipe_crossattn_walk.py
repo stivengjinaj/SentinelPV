@@ -293,7 +293,6 @@ class Model(nn.Module):
         return x
 
 
-    # 现在是均匀取了 4*4个点，之后可以变成到sensor的距离
     def get_grid(self, shape, device):
         size_x, size_y = shape[0], shape[1]
         batchsize = 1

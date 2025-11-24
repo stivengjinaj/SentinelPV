@@ -7,6 +7,6 @@ torchrun --nproc_per_node 1 --master_port 10071 ddp_main_partial_obs_eval_walk.p
 --data_dir /data/physense_car_data/ \
 --nb_epochs 5 \
 --lr 0.0025 \
---sensor_num 30 \
+--sensor_num 15 \
 --seed 1 \
---model_path ./checkpoints/car_30sensor_opt.pth
+--model_path /workspace/mayuezhou/physense_cr_ckpts/car/checkpoints/physense_walk_0.0025_15_this.pth

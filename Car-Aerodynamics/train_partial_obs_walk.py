@@ -30,11 +30,11 @@ def project_to_surface(xyz: torch.Tensor,
 
 
 def knn_idw_interp(
-    data: torch.Tensor,         # (B, N, C)  每个已知点的特征
-    pts: torch.Tensor,          # (N, 3)     已知点坐标
-    queries: torch.Tensor,      # (M, 3)     查询点坐标
-    k: int = 8,                 # 取最近 k 个
-    p: float = 2.0,             # 距离幂
+    data: torch.Tensor,         # (B, N, C)  features of known points
+    pts: torch.Tensor,          # (N, 3)     positions of known points
+    queries: torch.Tensor,      # (M, 3)     positions of quert points
+    k: int = 8,                 # the nearest k
+    p: float = 2.0,             # power
     mask: Optional[torch.Tensor] = None  # (N,) 1=valid
 ) -> torch.Tensor:              # (B, M, C)
 
@@ -44,9 +44,8 @@ def knn_idw_interp(
     if mask is not None:
         mask = mask.to(device, data.dtype)              # (N,)
 
-    # 1. pair-wise 距离  (M, N)
-    d2 = torch.cdist(queries, pts, p=2) + 1e-12         # 避免除 0
-    # 2. 取最近 k 个
+    d2 = torch.cdist(queries, pts, p=2) + 1e-12         
+
     d2, idx = torch.topk(d2, k, dim=1, largest=False)   # (M, k)
     w = 1.0 / (d2 ** (p / 2))                           # (M, k)
 
@@ -58,7 +57,7 @@ def knn_idw_interp(
     else:
         w = w / w.sum(dim=1, keepdim=True)
 
-    # 3. 加权求和
+
     feat_k = data[:, idx, :]                            # (B, M, k, C)
     w = w.unsqueeze(0).unsqueeze(-1)                    # (1, M, k, 1)
     out = (feat_k * w).sum(dim=2)                      # (B, M, C)
@@ -163,7 +162,7 @@ def main(local_rank, device, train_dataset, val_dataset, Net, model_name, hparam
     model.module.xyz_sens = torch.nn.Parameter(torch.tensor(xyz, dtype=torch.float32, device=device), requires_grad=True)
     
 
-    car_pts_np = pos.cpu().numpy()           # KDTree 只能吃 numpy
+    car_pts_np = pos.cpu().numpy()           
     kdt = KDTree(car_pts_np, leaf_size=512) 
     
     optimizer = torch.optim.Adam(model.parameters(), lr=hparams['lr'])
@@ -175,7 +174,7 @@ def main(local_rank, device, train_dataset, val_dataset, Net, model_name, hparam
     sensor_pos_group = {
         'params'        : [model.module.xyz_sens],  # ★
         'lr'            : lr,
-        'weight_decay'  : 0.0                                          # 坐标不做 WD
+        'weight_decay'  : 0.0                                          
     }
     other_parameters = [p for p in model.module.parameters()
                         if p is not model.module.xyz_sens]

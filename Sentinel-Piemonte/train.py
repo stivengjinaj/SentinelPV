@@ -1,0 +1,83 @@
+import torch
+import torch.optim as optim
+from torch.utils.data import DataLoader
+import time
+import os
+
+from model import Model
+from dataset import SolarDataset 
+
+EPOCHS = 300
+BATCH_SIZE = 128
+LEARNING_RATE = 2e-4
+SAVE_DIR = "./checkpoints"
+
+TELEGRAM_TOKEN = "8647539434:AAGQ4Ik9OVVEd0Z0QhlDBHpAyTjnrIUmTms"
+TELEGRAM_CHAT_ID = "6694449067"
+
+def tg_notify(msg):
+    try:
+        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+        requests.post(url, data={"chat_id": TELEGRAM_CHAT_ID, "text": msg}, timeout=10)
+    except Exception:
+        pass
+
+os.makedirs(SAVE_DIR, exist_ok=True)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"Training on: {device}")
+
+train_dataset = SolarDataset(
+    y_path="irradiance_train.npy", 
+    weather_path="weather_train.npy",
+    coords_path="coords.npy"
+)
+
+train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
+
+model = Model(
+    space_dim=2, 
+    out_dim=1, 
+    n_layers=12,    # Deep enough for complex spatial physics
+    n_hidden=374,   # Transolver standard hidden dim
+    slice_num=32    # For irregular point cloud clustering
+).to(device)
+
+optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
+
+scaler = torch.amp.GradScaler('cuda')
+
+print("Starting Flow Matching Training...")
+
+for epoch in range(1, EPOCHS + 1):
+    model.train()
+    epoch_loss = 0.0
+    start_time = time.time()
+
+    for batch_idx, batch_data in enumerate(train_loader):
+        batch_data.pos = batch_data.pos.to(device)
+        batch_data.y = batch_data.y.to(device)
+        batch_data.weather = batch_data.weather.to(device)
+
+        optimizer.zero_grad()
+
+        with torch.amp.autocast('cuda'):
+            loss = model(batch_data) 
+
+        scaler.scale(loss).backward()
+        scaler.step(optimizer)
+        scaler.update()
+
+        epoch_loss += loss.item()
+
+    avg_loss = epoch_loss / len(train_loader)
+    epoch_time = time.time() - start_time
+
+    print(f"Epoch {epoch}/{EPOCHS} | Loss: {avg_loss:.5f} | Time: {epoch_time:.2f}s")
+
+    if epoch % 50 == 0:
+        tg_notify((f"Epoch {epoch}/{EPOCHS} | Loss: {avg_loss:.5f} | Time: {epoch_time:.2f}s"))
+        checkpoint_path = os.path.join(SAVE_DIR, f"physense_transolver_ep{epoch}.pth")
+        torch.save(model.state_dict(), checkpoint_path)
+        print(f"Saved checkpoint to {checkpoint_path}")
+
+print("Training Complete! Ready for Stage 2 (Sentinel Optimization).")

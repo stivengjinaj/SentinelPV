@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 import torch.nn as nn
-from timm.models.layers import trunc_normal_
+from timm.layers import trunc_normal_
 from einops import rearrange, repeat
 import math
 import random
@@ -320,50 +320,50 @@ class Model(nn.Module):
         return pos
 
     def forward(self, data):
-    pos = data.pos  # (N, 2)
-    y = data.y      # (N, out_dim) - e.g. Irradiance Target
-    weather = data.weather  # (N, out_dim) - e.g. Open-Meteo Temp
+        pos = data.pos  # (N, 2)
+        y = data.y      # (N, out_dim) - e.g. Irradiance Target
+        weather = data.weather  # (N, out_dim) - e.g. Open-Meteo Temp
 
-    num_points = y.size(0)
-    num_samples = random.randint(10, 200)
-    random_indices = torch.randperm(num_points)[:num_samples]
-    sampled_y = y[random_indices]
+        num_points = y.size(0)
+        num_samples = random.randint(10, 200)
+        random_indices = torch.randperm(num_points)[:num_samples]
+        sampled_y = y[random_indices]
 
-    device = pos.device
-    noise = torch.randn_like(y)
+        device = pos.device
+        noise = torch.randn_like(y)
 
-    u = torch.normal(mean=0.0, std=1.0, size=(1,)).to(device)
-    t = torch.sigmoid(u)
-    t_tmp = t.unsqueeze(-1).repeat(y.shape[0], 1)
-    
-    # Path from noise to data 
-    y_t = t_tmp * y + (1. - t_tmp) * noise
-    target = y - noise # v_theta
+        u = torch.normal(mean=0.0, std=1.0, size=(1,)).to(device)
+        t = torch.sigmoid(u)
+        t_tmp = t.unsqueeze(-1).repeat(y.shape[0], 1)
+        
+        # Path from noise to data 
+        y_t = t_tmp * y + (1. - t_tmp) * noise
+        target = y - noise # v_theta
 
-    # Noisy Field + Weather 
-    field_combined = torch.cat((y_t, weather), dim=-1)
-    x = torch.concat((pos, field_combined), dim=-1).unsqueeze(0)
+        # Noisy Field + Weather 
+        field_combined = torch.cat((y_t, weather), dim=-1)
+        x = torch.concat((pos, field_combined), dim=-1).unsqueeze(0)
 
-    if self.unified_pos:
-        new_pos = self.get_grid(pos.unsqueeze(0))
-        x = torch.cat((x, new_pos), dim=-1)
+        if self.unified_pos:
+            new_pos = self.get_grid(pos.unsqueeze(0))
+            x = torch.cat((x, new_pos), dim=-1)
 
-    fx = self.preprocess(x)
-    fx = fx + self.placeholder[None, None, :]
-    t_emb = self.t_embedder(t).squeeze()
+        fx = self.preprocess(x)
+        fx = fx + self.placeholder[None, None, :]
+        t_emb = self.t_embedder(t).squeeze()
 
-    sensor_feature = torch.concat((pos[random_indices], sampled_y), dim=-1).unsqueeze(0)
-    s = self.sensor_encoder(sensor_feature)
-    s_2 = self.sensor_encoder_2(sensor_feature)
-    t_emb = t_emb + s_2.mean(dim=1).squeeze()
+        sensor_feature = torch.concat((pos[random_indices], sampled_y), dim=-1).unsqueeze(0)
+        s = self.sensor_encoder(sensor_feature)
+        s_2 = self.sensor_encoder_2(sensor_feature)
+        t_emb = t_emb + s_2.mean(dim=1).squeeze()
 
-    x = self.transformer(fx, t_emb, s)
-    out = self.mlp_head(x, t_emb)[0]
+        x = self.transformer(fx, t_emb, s)
+        out = self.mlp_head(x, t_emb)[0]
 
-    loss_criterion = nn.MSELoss(reduction='none')
-    loss = loss_criterion(out, target).mean(dim=0)
+        loss_criterion = nn.MSELoss(reduction='none')
+        loss = loss_criterion(out, target).mean(dim=0)
 
-    return loss
+        return loss
 
     def sample(self, data, return_pred=False, seed=1, sensor_number=15):
         """

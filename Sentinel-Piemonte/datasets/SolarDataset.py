@@ -16,19 +16,9 @@ class SolarDataset(Dataset):
         return len(self.pvgis)
 
     def __getitem__(self, idx):
-        # (Irradiance)
         y = torch.tensor(self.pvgis.iloc[idx].values).float().unsqueeze(-1)
-        
-        # (Temperature)
         weather = torch.tensor(self.meteo.iloc[idx].values).float().unsqueeze(-1)
-        
-        class DataPacket:
-            def __init__(self, pos, y, weather):
-                self.pos = pos        # (1149, 2)
-                self.y = y            # (1149, 1) - Target for Stage 1
-                self.weather = weather # (1149, 1) - Input Channel 2
-        
-        return DataPacket(self.coords, y, weather)
+        return {'pos': self.coords, 'y': y, 'weather': weather}
 
 input_data = SolarDataset("pvgis_irradiance.csv", "meteo_temp.csv")
 loader = DataLoader(input_data, batch_size=32, shuffle=True)

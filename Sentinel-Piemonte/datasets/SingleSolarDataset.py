@@ -15,9 +15,7 @@ class SingleSolarDataset(Dataset):
     def __getitem__(self, idx):
         y = torch.tensor(self.y_data[idx]).float()
         
-        class DataPacket:
-            def __init__(self, pos, y):
-                self.pos = pos
-                self.y = y
-        
-        return DataPacket(self.pos_tensor, y)
+        return {
+            'pos': self.pos_tensor,
+            'y': y
+        }

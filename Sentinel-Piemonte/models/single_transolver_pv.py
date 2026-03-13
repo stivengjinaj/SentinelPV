@@ -192,17 +192,29 @@ class Transformer(nn.Module):
             nn.init.zeros_(self.layers_x[i][7][1].bias)
 
     def forward(self, x, mu, s):
+        # mu: (B, n_hidden//4) → needs unsqueeze for broadcasting with (B, N, n_hidden)
+        if mu.dim() == 2:
+            mu_for_modulation = mu.unsqueeze(1)  # (B, 1, n_hidden//4)
+        else:
+            mu_for_modulation = mu
+
         for cosattn, ff1, attn, ff2, adaLN_modulation_mu1, norm1, norm2, adaLN_modulation_mu2, norm3, norm4 in self.layers_x:
 
-            shift_msa_mu_c, scale_msa_mu_c, gate_msa_mu_c, shift_mlp_mu_c, scale_mlp_mu_c, gate_mlp_mu_c = adaLN_modulation_mu1(mu).chunk(6, dim=-1)
+            shift_msa_mu_c, scale_msa_mu_c, gate_msa_mu_c, shift_mlp_mu_c, scale_mlp_mu_c, gate_mlp_mu_c = \
+                adaLN_modulation_mu1(mu_for_modulation).chunk(6, dim=-1)
+            # Now each chunk is (B, 1, n_hidden) → broadcasts correctly with (B, N, n_hidden)
+
             x_cosattn = cosattn(modulate(norm1(x), shift_msa_mu_c, scale_msa_mu_c), s)
             x = x + gate_msa_mu_c * x_cosattn
             x = x + gate_mlp_mu_c * ff1(modulate(norm2(x), shift_mlp_mu_c, scale_mlp_mu_c))
 
-            shift_msa_mu, scale_msa_mu, gate_msa_mu, shift_mlp_mu, scale_mlp_mu, gate_mlp_mu = adaLN_modulation_mu2(mu).chunk(6, dim=-1)
+            shift_msa_mu, scale_msa_mu, gate_msa_mu, shift_mlp_mu, scale_mlp_mu, gate_mlp_mu = \
+                adaLN_modulation_mu2(mu_for_modulation).chunk(6, dim=-1)
+
             x_attn = attn(modulate(norm3(x), shift_msa_mu, scale_msa_mu))
             x = x + gate_msa_mu * x_attn
             x = x + gate_mlp_mu * ff2(modulate(norm4(x), shift_mlp_mu, scale_mlp_mu))
+
         return x
 
 
@@ -226,6 +238,8 @@ class FinalLayer(nn.Module):
         nn.init.constant_(self.mlp[2].bias, 0)
 
     def forward(self, x, mu):
+        if mu.dim() == 2:
+            mu = mu.unsqueeze(1)  # (B, 1, n_hidden//4) for broadcasting
         shift_mu, scale_mu = self.adaLN_modulation_mu(mu).chunk(2, dim=-1)
         x = modulate(self.norm_final(x), shift_mu, scale_mu)
         x = self.mlp(x)
@@ -293,71 +307,75 @@ class Model(nn.Module):
 
 
     def get_grid(self, my_pos):
-        """
-        Compute distance-based reference grid for 2D positions (lat, lon).
-
-        Args:
-            my_pos: (B, N, 2) - positions of PV panels (latitude, longitude)
-
-        Returns:
-            pos: (B, N, ref*ref) - distances to reference grid points
-        """
-        batchsize = my_pos.shape[0]
+        if my_pos.dim() == 2:
+            my_pos = my_pos.unsqueeze(0)
+            
+        batchsize, num_points, _ = my_pos.shape
         device = my_pos.device
 
-        # Create 2D reference grid in lat-lon space
-        gridx = torch.tensor(np.linspace(0, 1, self.ref), dtype=torch.float, device=device)
-        gridx = gridx.reshape(1, self.ref, 1, 1).repeat([batchsize, 1, self.ref, 1])
-        gridy = torch.tensor(np.linspace(0, 1, self.ref), dtype=torch.float, device=device)
-        gridy = gridy.reshape(1, 1, self.ref, 1).repeat([batchsize, self.ref, 1, 1])
-        grid_ref = torch.cat((gridx, gridy), dim=-1).reshape(batchsize, self.ref * self.ref, 2)
+        grid_coords = torch.linspace(0, 1, self.ref, device=device)
+        grid_x, grid_y = torch.meshgrid(grid_coords, grid_coords, indexing='ij')
+        grid_ref = torch.stack((grid_x, grid_y), dim=-1).reshape(1, -1, 2)
+        grid_ref = grid_ref.expand(batchsize, -1, -1) 
 
-        # Compute distances from panels to reference grid points
-        pos = torch.sqrt(
-            torch.sum((my_pos[:, :, None, :] - grid_ref[:, None, :, :]) ** 2,
-                      dim=-1)
-        ).reshape(batchsize, my_pos.shape[1], self.ref * self.ref).contiguous()
-        return pos
+        pos_diff = my_pos.unsqueeze(2) - grid_ref.unsqueeze(1)
+        dist = torch.sqrt(torch.sum(pos_diff**2, dim=-1) + 1e-8)
+        
+        return dist
 
-    def forward(self, data):
-        pos = data.pos  # (N, 2)
-        y = data.y      # (N, 1) - PV Power Output
+    def forward(self, batch):
+        pos = batch['pos']
+        y = batch['y']
+        
+        batch_size = y.shape[0]
+        num_points = y.shape[1]
+        device = y.device
 
-        num_points = y.size(0)
-        num_samples = random.randint(10, 200)
-        random_indices = torch.randperm(num_points)[:num_samples]
-        sampled_y = y[random_indices]
-
-        device = pos.device
         noise = torch.randn_like(y)
 
-        u = torch.normal(mean=0.0, std=1.0, size=(1,)).to(device)
-        t = torch.sigmoid(u)
-        t_tmp = t.unsqueeze(-1).repeat(y.shape[0], 1)
+        num_samples = random.randint(10, 200)
+        random_indices = torch.randperm(num_points, device=device)[:num_samples]
+
+        sampled_y = y[:, random_indices, :]
+        sampled_pos = pos[:, random_indices, :]
         
-        # Path from noise to data
-        y_t = t_tmp * y + (1. - t_tmp) * noise
+
+        # Generate 't' for the batch
+        u = torch.normal(mean=0.0, std=1.0, size=(batch_size,)).to(device)
+        t = torch.sigmoid(u) 
+        
+        t_reshaped = t.view(batch_size, 1, 1)
+        
+        # Interpolate
+        y_t = t_reshaped * y + (1. - t_reshaped) * noise
         target = y - noise
 
-        x = torch.concat((pos, y_t), dim=-1).unsqueeze(0)  # Shape: (1, N, 3)
+        # Concatenate Position and Field
+        if pos.dim() == 2:
+            pos = pos.unsqueeze(0).expand(batch_size, -1, -1)
+            
+        x = torch.cat((pos, y_t), dim=-1) # Shape: (B, 1149, 3)
 
         if self.unified_pos:
-            new_pos = self.get_grid(pos.unsqueeze(0))
+            new_pos = self.get_grid(pos)
             x = torch.cat((x, new_pos), dim=-1)
 
         fx = self.preprocess(x) + self.placeholder[None, None, :]
         t_emb = self.t_embedder(t).squeeze()
 
         # Cross-Attention
-        sensor_feature = torch.concat((pos[random_indices], sampled_y), dim=-1).unsqueeze(0)
+        sensor_feature = torch.cat((sampled_pos, sampled_y), dim=-1)
+        
         s = self.sensor_encoder(sensor_feature)
         s_2 = self.sensor_encoder_2(sensor_feature)
-        t_emb = t_emb + s_2.mean(dim=1).squeeze()
+        
+        t_avg_sensor = s_2.mean(dim=1) 
+        t_emb = t_emb + t_avg_sensor 
 
         x_out = self.transformer(fx, t_emb, s)
-        out = self.mlp_head(x_out, t_emb)[0]
+        out = self.mlp_head(x_out, t_emb)
 
-        loss = nn.MSELoss(reduction='none')(out, target).mean(dim=0)
+        loss = torch.nn.functional.mse_loss(out, target)
 
         return loss
 
@@ -409,7 +427,7 @@ class Model(nn.Module):
                 fx = self.preprocess(x)
                 fx = fx + self.placeholder[None, None, :]
 
-                t_emb = self.t_embedder(t).squeeze()
+                t_emb = self.t_embedder(t).squeeze(1)
 
                 sensor_feature = torch.concat((xyz, sampled_y), dim=-1).unsqueeze(0)
                 s_2 = self.sensor_encoder_2(sensor_feature)

@@ -19,7 +19,7 @@ IRRAD_PATH    = "datasets/irradiance_train.npy"
 COORDS_PATH   = "datasets/coords.npy"
 RESULTS_DIR   = "./results"
 
-WANDB_PROJECT  = "physense-irradiance"
+WANDB_PROJECT  = "physense-irradiance-regular-mesh"
 WANDB_ENTITY   = "stivengjinaj-politecnico-di-torino"
 WANDB_RUN_NAME = "sentinelpv-stage2"
 

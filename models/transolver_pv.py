@@ -35,44 +35,31 @@ class TimestepEmbedder(nn.Module):
         return self.mlp(self.timestep_embedding(t, self.frequency_embedding_size))
 
 
-class Physics_Attention_Irregular_Mesh(nn.Module):
-    def __init__(self, dim, heads=8, dim_head=64, dropout=0., slice_num=32):
+class SelfAttention(nn.Module):
+    """
+    Standard multi-head self-attention for a regular token sequence.
+    Replaces Physics_Attention_Irregular_Mesh.
+    Input/output: (B, N_tokens, dim)
+    """
+    def __init__(self, dim, heads=8, dim_head=64, dropout=0.):
         super().__init__()
-        inner_dim = dim_head * heads
-        self.dim_head = dim_head
-        self.heads = heads
-        self.softmax = nn.Softmax(dim=-1)
-        self.dropout = nn.Dropout(dropout)
-        self.temperature = nn.Parameter(torch.ones(1, heads, 1, 1) * 0.5)
-
-        self.in_project_x     = nn.Linear(dim, inner_dim)
-        self.in_project_fx    = nn.Linear(dim, inner_dim)
-        self.in_project_slice = nn.Linear(dim_head, slice_num)
-        nn.init.orthogonal_(self.in_project_slice.weight)
-
-        self.to_q   = nn.Linear(dim_head, dim_head, bias=False)
-        self.to_k   = nn.Linear(dim_head, dim_head, bias=False)
-        self.to_v   = nn.Linear(dim_head, dim_head, bias=False)
-        self.to_out = nn.Sequential(nn.Linear(inner_dim, dim), nn.Dropout(dropout))
+        inner_dim    = dim_head * heads
+        self.heads   = heads
+        self.to_qkv  = nn.Linear(dim, inner_dim * 3, bias=False)
+        self.to_out  = nn.Sequential(nn.Linear(inner_dim, dim), nn.Dropout(dropout))
 
     def forward(self, x):
-        B, N, C = x.shape
-        fx_mid = self.in_project_fx(x).reshape(B, N, self.heads, self.dim_head).permute(0, 2, 1, 3)
-        x_mid  = self.in_project_x(x).reshape(B, N, self.heads, self.dim_head).permute(0, 2, 1, 3)
-
-        slice_weights = self.softmax(self.in_project_slice(x_mid) / self.temperature)  # B H N G
-        slice_norm    = slice_weights.sum(2)                                             # B H G
-        slice_token   = torch.einsum("bhnc,bhng->bhgc", fx_mid, slice_weights)
-        slice_token   = slice_token / (slice_norm[..., None] + 1e-5)
-
-        q = self.to_q(slice_token)
-        k = self.to_k(slice_token)
-        v = self.to_v(slice_token)
-        out_slice = F.scaled_dot_product_attention(q, k, v, dropout_p=0.1 if self.training else 0.0)
-
-        out_x = torch.einsum("bhgc,bhng->bhnc", out_slice, slice_weights)
-        out_x = rearrange(out_x, 'b h n d -> b n (h d)')
-        return self.to_out(out_x)
+        # x : (B, N_tokens, dim)
+        B, N, _ = x.shape
+        qkv = self.to_qkv(x).chunk(3, dim=-1)       # three tensors of (B, N, inner_dim)
+        q, k, v = map(
+            lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), qkv
+        )
+        out = F.scaled_dot_product_attention(
+            q, k, v, dropout_p=0.1 if self.training else 0.0
+        )
+        out = rearrange(out, 'b h n d -> b n (h d)')
+        return self.to_out(out)
 
 
 class FeedForward(nn.Module):
@@ -106,9 +93,46 @@ class CrossAttention(nn.Module):
         out     = F.scaled_dot_product_attention(q, k, v, dropout_p=0.1 if self.training else 0.0)
         return self.to_out(rearrange(out, 'b h n d -> b n (h d)'))
 
+def make_2d_sincos_pos_embed(embed_dim, grid_h, grid_w):
+    """
+    Build a fixed 2D sinusoidal positional embedding.
+    Works for any embed_dim by padding to the nearest multiple of 4
+    then slicing back to embed_dim.
+    Returns: (1, grid_h * grid_w, embed_dim)
+    """
+    # Pad up to nearest multiple of 4 if needed
+    pad      = (4 - embed_dim % 4) % 4   # 0 if already divisible
+    dim_work = embed_dim + pad            # 374 -> 376
 
-class Transformer(nn.Module):
-    def __init__(self, dim, depth, heads, dim_head, mlp_dim, slice_num, dropout=0.):
+    half = dim_work // 2                 # 188
+
+    rows = torch.arange(grid_h, dtype=torch.float32)
+    cols = torch.arange(grid_w, dtype=torch.float32)
+
+    freq = torch.arange(half // 2, dtype=torch.float32)
+    freq = 1.0 / (10000 ** (freq / (half // 2)))
+
+    row_enc = torch.outer(rows, freq)    # (H, half//2)
+    col_enc = torch.outer(cols, freq)    # (W, half//2)
+
+    row_embed = torch.cat([torch.sin(row_enc), torch.cos(row_enc)], dim=-1)  # (H, half)
+    col_embed = torch.cat([torch.sin(col_enc), torch.cos(col_enc)], dim=-1)  # (W, half)
+
+    row_embed = row_embed.unsqueeze(1).expand(-1, grid_w, -1)  # (H, W, half)
+    col_embed = col_embed.unsqueeze(0).expand(grid_h, -1, -1)  # (H, W, half)
+
+    pos_embed = torch.cat([row_embed, col_embed], dim=-1)      # (H, W, dim_work)
+    pos_embed = pos_embed.reshape(1, grid_h * grid_w, dim_work)
+
+    # Slice back to the requested embed_dim
+    return pos_embed[:, :, :embed_dim]                         # (1, H*W, embed_dim)
+
+class TransformerGrid(nn.Module):
+    """
+    Identical structure to Transformer but uses SelfAttention
+    instead of Physics_Attention_Irregular_Mesh.
+    """
+    def __init__(self, dim, depth, heads, dim_head, mlp_dim, dropout=0.):
         super().__init__()
         self.layers_x = nn.ModuleList()
         cond_dim = dim // 4
@@ -117,18 +141,16 @@ class Transformer(nn.Module):
             self.layers_x.append(nn.ModuleList([
                 CrossAttention(dim, heads=heads // 2, dim_head=dim_head, dropout=dropout),
                 FeedForward(dim, mlp_dim, dropout=dropout),
-                Physics_Attention_Irregular_Mesh(dim, heads=heads, dim_head=dim_head,
-                                                 dropout=dropout, slice_num=slice_num),
+                SelfAttention(dim, heads=heads, dim_head=dim_head, dropout=dropout),
                 FeedForward(dim, mlp_dim, dropout=dropout),
-                nn.Sequential(nn.SiLU(), nn.Linear(cond_dim, 6 * dim, bias=True)),  # adaLN cross
+                nn.Sequential(nn.SiLU(), nn.Linear(cond_dim, 6 * dim, bias=True)),
                 nn.LayerNorm(dim),
                 nn.LayerNorm(dim),
-                nn.Sequential(nn.SiLU(), nn.Linear(cond_dim, 6 * dim, bias=True)),  # adaLN self
+                nn.Sequential(nn.SiLU(), nn.Linear(cond_dim, 6 * dim, bias=True)),
                 nn.LayerNorm(dim),
                 nn.LayerNorm(dim),
             ]))
 
-        # Zero-init adaLN output projections
         for i in range(depth):
             nn.init.zeros_(self.layers_x[i][4][1].weight)
             nn.init.zeros_(self.layers_x[i][4][1].bias)
@@ -136,7 +158,8 @@ class Transformer(nn.Module):
             nn.init.zeros_(self.layers_x[i][7][1].bias)
 
     def forward(self, x, mu, s):
-        mu_bc = mu.unsqueeze(1) if mu.dim() == 2 else mu  # (B, 1, cond_dim)
+        # x : (B, N_tokens, dim)   mu : (B, cond_dim)   s : (B, S, dim)
+        mu_bc = mu.unsqueeze(1) if mu.dim() == 2 else mu
 
         for (cosattn, ff1, attn, ff2,
              adaLN1, norm1, norm2,
@@ -176,167 +199,141 @@ class FinalLayer(nn.Module):
         return self.mlp(x)
 
 
-class IrradianceModel(nn.Module):
+class IrradianceModelGrid(nn.Module):
     """
-    Transolver-based flow-matching model for irradiance field reconstruction.
+    DiT-style flow-matching model for irradiance on a regular grid.
 
-    Input per point: pos (2) + irradiance_t (1) + ref-grid distances (ref²)
-    Sensor context:  pos (2) + irradiance_observed (1)
-    Output:          velocity field (1) — predicts (X1 - X0)
+    The H×W grid is flattened to H*W tokens. Each token is one grid cell.
+    Cells with no panel assigned carry irradiance=0 and mask=0.
+
+    Input per token : noisy irradiance (1) + mask (1) = 2 channels
+                      + 2D sincos positional embedding (embed_dim)
+    Sensor context  : same as irregular model — pos (2) + irradiance (1) = 3
+    Output          : velocity field (1) per token
     """
 
     def __init__(
         self,
-        space_dim:  int = 2,
-        fun_dim:    int = 1,   # irradiance
-        out_dim:    int = 1,
-        n_layers:   int = 12,
-        n_hidden:   int = 374,
-        n_head:     int = 8,
-        slice_num:  int = 32,
-        ref:        int = 4,
-        dropout:    float = 0.0,
+        grid_h:    int   = 34,
+        grid_w:    int   = 34,
+        in_chans:  int   = 2,      # noisy irradiance + mask
+        out_dim:   int   = 1,
+        n_layers:  int   = 12,
+        n_hidden:  int   = 374,
+        n_head:    int   = 8,
+        dim_head:  int   = 64,
+        space_dim: int   = 2,
+        fun_dim:   int   = 1,
+        dropout:   float = 0.0,
     ):
         super().__init__()
-        self.__name__ = 'IrradiancePhySense'
+        self.__name__ = 'IrradiancePhySenseGrid'
 
-        self.ref       = ref
-        self.space_dim = space_dim
-        self.fun_dim   = fun_dim
-        self.n_hidden  = n_hidden
-        cond_dim       = n_hidden // 4
+        self.grid_h   = grid_h
+        self.grid_w   = grid_w
+        self.n_tokens = grid_h * grid_w   # 34*34 = 1156
+        cond_dim      = n_hidden // 4
 
-        in_dim = space_dim + fun_dim + ref * ref   # 2 + 1 + 16 = 19
-
-        self.preprocess = nn.Sequential(
-            nn.LayerNorm(in_dim),
-            nn.Linear(in_dim, n_hidden),
+        # ── Token input projection ────────────────────────────────────────────
+        # Each grid cell has in_chans=2 values (noisy irradiance + mask).
+        # Project to n_hidden.
+        self.token_proj = nn.Sequential(
+            nn.LayerNorm(in_chans),
+            nn.Linear(in_chans, n_hidden),
             nn.LayerNorm(n_hidden),
         )
 
-        # Sensor encoder: (lat, lon, irradiance) -> hidden
-        sensor_in = space_dim + fun_dim            # 2 + 1 = 3
-        self.sensor_encoder   = nn.Sequential(nn.Linear(sensor_in, n_hidden),  nn.LayerNorm(n_hidden))
-        self.sensor_encoder_2 = nn.Sequential(nn.Linear(sensor_in, cond_dim),  nn.LayerNorm(cond_dim))
+        # ── 2D positional embedding (fixed, not learnable) ────────────────────
+        # Registered as a buffer so it moves to GPU with .to(device) but is
+        # not treated as a trainable parameter.
+        pos_embed = make_2d_sincos_pos_embed(n_hidden, grid_h, grid_w)
+        self.register_buffer('pos_embed', pos_embed)   # (1, H*W, n_hidden)
 
-        self.t_embedder  = TimestepEmbedder(cond_dim, frequency_embedding_size=cond_dim)
-        self.transformer = Transformer(n_hidden, n_layers, n_head, n_head, n_hidden, slice_num, dropout)
+        # ── Sensor encoder (unchanged from irregular model) ───────────────────
+        sensor_in = space_dim + fun_dim                # 2 + 1 = 3
+        self.sensor_encoder   = nn.Sequential(
+            nn.Linear(sensor_in, n_hidden), nn.LayerNorm(n_hidden)
+        )
+        self.sensor_encoder_2 = nn.Sequential(
+            nn.Linear(sensor_in, cond_dim), nn.LayerNorm(cond_dim)
+        )
+
+        # ── Timestep embedder (unchanged) ─────────────────────────────────────
+        self.t_embedder = TimestepEmbedder(cond_dim, frequency_embedding_size=cond_dim)
+
+        # ── Transformer (regular grid version) ───────────────────────────────
+        self.transformer = TransformerGrid(
+            n_hidden, n_layers, n_head, dim_head, n_hidden, dropout
+        )
+
+        # ── Output head (unchanged) ───────────────────────────────────────────
         self.mlp_head    = FinalLayer(n_hidden, out_channels=out_dim)
         self.placeholder = nn.Parameter((1 / n_hidden) * torch.rand(n_hidden))
 
+        # ── Store grid index for loss masking ─────────────────────────────────
+        self.space_dim = space_dim
+        self.fun_dim   = fun_dim
 
-    def _ref_grid_distances(self, pos: torch.Tensor) -> torch.Tensor:
-        """Compute distances from each point to a ref×ref reference grid."""
-        if pos.dim() == 2:
-            pos = pos.unsqueeze(0)
-        B = pos.shape[0]
-        device = pos.device
-        gc = torch.linspace(0, 1, self.ref, device=device)
-        gx, gy = torch.meshgrid(gc, gc, indexing='ij')
-        grid = torch.stack([gx, gy], dim=-1).reshape(1, -1, 2)   # (1, ref^2, 2)
-        grid = grid.expand(B, -1, -1)                             # (B, ref^2, 2)
-        diff = pos.unsqueeze(2) - grid.unsqueeze(1)               # (B, N, ref^2, 2)
-        return (diff ** 2).sum(-1).sqrt() + 1e-8                  # (B, N, ref^2)
-
-
-    def forward(self, batch: dict) -> torch.Tensor:
+    def forward(self, batch):
         """
-        Flow-matching training step.
-
         batch keys:
-            pos : (B, N, 2)   panel coordinates (normalised)
-            y   : (B, N, 1)   irradiance (normalised)
-
-        Returns:
-            scalar MSE loss
+            grid   : (B, 1, H, W)  noisy irradiance grid
+            mask   : (B, 1, H, W)  1 where panel exists
+            y_flat : (B, N, 1)     true irradiance at each panel (for loss)
+            pos    : (B, N, 2)     panel coordinates (for sensor sampling)
         """
-        pos = batch['pos']   # (B, N, 2)
-        y   = batch['y']     # (B, N, 1)
+        grid   = batch['grid']    # (B, 1, H, W)
+        mask   = batch['mask']    # (B, 1, H, W)
+        y_flat = batch['y_flat']  # (B, N, 1)
+        pos    = batch['pos']     # (B, N, 2)
 
-        B, N, _ = y.shape
-        device  = y.device
+        B  = grid.shape[0]
+        N  = y_flat.shape[1]
+        device = grid.device
 
-        # Sample random t
-        u = torch.randn(B, device=device)
-        t = torch.sigmoid(u)                 # (B,)
-        t_bc = t.view(B, 1, 1)              # broadcast over (N, 1)
+        # ── Flow interpolation on the grid ────────────────────────────────────
+        u    = torch.randn(B, device=device)
+        t    = torch.sigmoid(u)
+        t_bc = t.view(B, 1, 1, 1)                 # broadcast over (1, H, W)
 
-        # Interpolation
-        noise = torch.randn_like(y)
-        y_t   = t_bc * y + (1. - t_bc) * noise
-        target = y - noise                   # velocity target
+        noise  = torch.randn_like(grid)
+        grid_t = t_bc * grid + (1. - t_bc) * noise  # (B, 1, H, W)
+        # Target velocity — same formula as irregular model
+        # We only care about loss at cells that have a real panel (mask=1)
+        target_grid = grid - noise                   # (B, 1, H, W)
 
-        # Build field tokens
-        if pos.dim() == 2:
-            pos = pos.unsqueeze(0).expand(B, -1, -1)
+        # ── Build token sequence ──────────────────────────────────────────────
+        # Flatten (B, 1, H, W) and (B, 1, H, W) to (B, H*W, 2)
+        grid_flat = grid_t.permute(0, 2, 3, 1).reshape(B, self.n_tokens, 1)  # (B, T, 1)
+        mask_flat = mask.permute(0, 2, 3, 1).reshape(B, self.n_tokens, 1)    # (B, T, 1)
+        tokens    = torch.cat([grid_flat, mask_flat], dim=-1)                 # (B, T, 2)
 
-        ref_dists = self._ref_grid_distances(pos)          # (B, N, ref^2)
-        x = torch.cat([pos, y_t, ref_dists], dim=-1)       # (B, N, 2+1+ref^2)
-        fx = self.preprocess(x) + self.placeholder[None, None, :]
+        # Project to hidden dim and add positional embedding
+        fx = self.token_proj(tokens)           # (B, T, n_hidden)
+        fx = fx + self.pos_embed               # (B, T, n_hidden)  broadcast over B
+        fx = fx + self.placeholder[None, None, :]
 
-        # Random sensor subset (10–200)
-        n_sensors = random.randint(10, min(200, N))
-        idx       = torch.randperm(N, device=device)[:n_sensors]
-        s_pos     = pos[:, idx, :]    # (B, n_sensors, 2)
-        s_y       = y[:, idx, :]     # (B, n_sensors, 1) <- ground-truth irradiance at sensors
+        # ── Random sensor subset (same as irregular model) ────────────────────
+        n_sensors   = random.randint(10, min(200, N))
+        idx         = torch.randperm(N, device=device)[:n_sensors]
+        s_pos       = pos[:, idx, :]           # (B, S, 2)
+        s_y         = y_flat[:, idx, :]        # (B, S, 1)  ground truth at sensors
 
-        sensor_feat = torch.cat([s_pos, s_y], dim=-1)      # (B, n_sensors, 3)
-        s    = self.sensor_encoder(sensor_feat)             # (B, n_sensors, n_hidden)
-        s2   = self.sensor_encoder_2(sensor_feat)           # (B, n_sensors, cond_dim)
+        sensor_feat = torch.cat([s_pos, s_y], dim=-1)   # (B, S, 3)
+        s    = self.sensor_encoder(sensor_feat)          # (B, S, n_hidden)
+        s2   = self.sensor_encoder_2(sensor_feat)        # (B, S, cond_dim)
 
-        t_emb = self.t_embedder(t) + s2.mean(dim=1)        # (B, cond_dim)
+        t_emb = self.t_embedder(t) + s2.mean(dim=1)     # (B, cond_dim)
 
-        # Transformer + output
-        x_out = self.transformer(fx, t_emb, s)
-        pred  = self.mlp_head(x_out, t_emb)                # (B, N, 1)
+        # ── Transformer ───────────────────────────────────────────────────────
+        x_out = self.transformer(fx, t_emb, s)           # (B, T, n_hidden)
+        pred  = self.mlp_head(x_out, t_emb)              # (B, T, 1)
 
-        return F.mse_loss(pred, target)
+        # ── Loss: only on cells that have a real panel ─────────────────────────
+        # Reshape target to (B, T, 1) and apply mask
+        target_flat = target_grid.permute(0, 2, 3, 1).reshape(B, self.n_tokens, 1)
+        mask_flat_  = mask_flat.detach()                 # (B, T, 1)
 
-
-    @torch.no_grad()
-    def sample(
-        self,
-        pos:           torch.Tensor,    # (N, 2)
-        y_full:        torch.Tensor,    # (N, 1)  — ground truth (for error computation)
-        sensor_indices: torch.Tensor,   # (S,)    — which panels are sensors
-        n_steps:       int = 5,
-        n_samples:     int = 1,
-    ):
-        """
-        ODE integration to reconstruct the full irradiance field from sparse sensors.
-
-        Returns:
-            pred          : (N, 1) reconstructed field
-            relative_loss : scalar relative-L2 error
-        """
-        device = pos.device
-        pos_bc = pos.unsqueeze(0)           # (1, N, 2)
-        ref_d  = self._ref_grid_distances(pos_bc)
-
-        s_pos  = pos[sensor_indices].unsqueeze(0)    # (1, S, 2)
-        s_y    = y_full[sensor_indices].unsqueeze(0) # (1, S, 1)
-        sensor_feat = torch.cat([s_pos, s_y], dim=-1)
-
-        s    = self.sensor_encoder(sensor_feat)
-        s2   = self.sensor_encoder_2(sensor_feat)
-
-        pred_acc = torch.zeros_like(y_full)
-
-        for _ in range(n_samples):
-            z  = torch.randn_like(y_full.unsqueeze(0))   # (1, N, 1)
-            dt = 1.0 / n_steps
-
-            for i in range(n_steps):
-                t_val = torch.tensor([i / n_steps], device=device)
-                x     = torch.cat([pos_bc, z, ref_d], dim=-1)
-                fx    = self.preprocess(x) + self.placeholder[None, None, :]
-                t_emb = self.t_embedder(t_val) + s2.mean(dim=1)
-                x_out = self.transformer(fx, t_emb, s)
-                vel   = self.mlp_head(x_out, t_emb)      # (1, N, 1)
-                z     = z + vel * dt
-
-            pred_acc = pred_acc + z.squeeze(0)
-
-        pred = pred_acc / n_samples
-        rel_loss = (torch.norm(y_full - pred) / (torch.norm(y_full) + 1e-8)).item()
-        return pred, rel_loss
+        # MSE only over real panel cells
+        loss = (((pred - target_flat) ** 2) * mask_flat_).sum() / (mask_flat_.sum() + 1e-8)
+        return loss

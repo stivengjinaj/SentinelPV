@@ -7,17 +7,18 @@ import wandb
 from torch.optim.lr_scheduler import CosineAnnealingLR, LinearLR, SequentialLR
 from torch.utils.data import DataLoader
 
-from datasets.IrradianceDataset import IrradianceDataset
-from models.transolver_pv import IrradianceModel
+from datasets.IrradianceDataset import IrradianceDatasetGrid
+from models.transolver_pv import IrradianceModelGrid
 
+GRID_H, GRID_W = 34, 34
 EPOCHS      = 300
 BATCH_SIZE  = 128
 LR          = 1e-4
 SAVE_DIR    = "./checkpoints"
 IRRAD_PATH  = "datasets/irradiance_train.npy"
-COORDS_PATH = "datasets/coords.npy"
+COORDS_PATH = "datasets/coords_norm.npy"
 
-WANDB_PROJECT  = "physense-irradiance"
+WANDB_PROJECT  = "physense-irradiance-regular-mesh"
 WANDB_ENTITY   = "stivengjinaj-politecnico-di-torino"
 WANDB_RUN_NAME = "sentinelpv-stage1"
 
@@ -44,20 +45,26 @@ def train():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
 
-    dataset = IrradianceDataset(IRRAD_PATH, COORDS_PATH)
+    dataset = IrradianceDatasetGrid(
+        irradiance_path    = IRRAD_PATH,
+        coords_path        = COORDS_PATH,
+        grid_indices_path  = "datasets/grid_indices.npy",
+        grid_h             = GRID_H,
+        grid_w             = GRID_W,
+    )
     loader  = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True,
                          num_workers=4, pin_memory=True)
     N = dataset.pos_tensor.shape[0]
     T = len(dataset)
     print(f"Dataset: {T} timesteps | {N} panels")
 
-    model = IrradianceModel(
-        space_dim = 2,
-        fun_dim   = 1,
-        out_dim   = 1,
-        n_layers  = 12,
-        n_hidden  = 374,
-        slice_num = 32,
+    model = IrradianceModelGrid(
+        grid_h   = GRID_H,
+        grid_w   = GRID_W,
+        n_layers = 12,
+        n_hidden = 374,
+        n_head   = 8,
+        dim_head = 64,
     ).to(device)
 
     total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)

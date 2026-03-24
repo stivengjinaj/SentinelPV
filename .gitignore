@@ -1,0 +1,10 @@
+*.pth
+*.pyc
+*.npy
+Sentinel-Piemonte/Miniconda3-latest-Linux-x86_64.sh
+Sentinel-Piemonte/datasets/power_train.npy
+Sentinel-Piemonte/sentinel_env
+*.nc
+wandb/*
+sentinel_env/
+checkpoints/

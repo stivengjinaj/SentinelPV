@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "../../../../data/SentinelPV"
+		},
+		{
+			"path": "../../../data"
 		}
 	],
 	"settings": {}

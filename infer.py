@@ -25,10 +25,10 @@ import torch
 
 from models.transolver_pv import IrradianceModel
 
-STAGE1_CKPT     = "checkpoints/irradiance_stage1_final.pth"
-SENTINEL_PATH   = "results/sentinel_panels.npy"
-COORDS_PATH     = "datasets/coords.npy"
-PANEL_IDS_PATH  = "datasets/panel_ids.npy"
+STAGE1_CKPT     = "training_history/train_pvgis2005_35sentinels/irradiance_stage1_final.pth"
+SENTINEL_PATH   = "training_history/train_pvgis2005_35sentinels/sentinel_panels.npy"
+COORDS_PATH     = "training_history/train_pvgis2005_35sentinels/dataset/coords.npy"
+PANEL_IDS_PATH  = "training_history/train_pvgis2005_35sentinels/dataset/panel_ids.npy"
 
 
 IRRAD_MIN = 0.0       # W/m2

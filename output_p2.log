@@ -1,0 +1,56 @@
+nohup: ignoring input
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from /home/sgjinaj/.netrc.
+wandb: Currently logged in as: stivengjinaj (stivengjinaj-politecnico-di-torino) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: setting up run lv43sqq4
+wandb: Tracking run with wandb version 0.25.1
+wandb: Run data is saved locally in /home/sgjinaj/SentinelPV_Physense/wandb/run-20260414_122739-lv43sqq4
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run sentinelpv-stage2
+wandb: ⭐️ View project at https://wandb.ai/stivengjinaj-politecnico-di-torino/physense-irradiance
+wandb: 🚀 View run at https://wandb.ai/stivengjinaj-politecnico-di-torino/physense-irradiance/runs/lv43sqq4
+Device: cuda
+Dataset: 8760 timesteps | 1149 panels
+Stage 1 checkpoint loaded: ./checkpoints/irradiance_stage1_final.pth
+
+Starting Stage 2: optimising 15 sentinel positions...
+
+Epoch   1/50 | Flow loss: 0.020357
+Epoch   2/50 | Flow loss: 0.020686
+Epoch   3/50 | Flow loss: 0.020011
+Epoch   4/50 | Flow loss: 0.019844
+Epoch   5/50 | Flow loss: 0.019504
+Epoch   6/50 | Flow loss: 0.019983
+Epoch   7/50 | Flow loss: 0.020180
+Epoch   8/50 | Flow loss: 0.021163
+Epoch   9/50 | Flow loss: 0.021460
+Epoch  10/50 | Flow loss: 0.020335
+Epoch  11/50 | Flow loss: 0.020634
+Epoch  12/50 | Flow loss: 0.021242
+Epoch  13/50 | Flow loss: 0.019439
+Epoch  14/50 | Flow loss: 0.020064
+Epoch  15/50 | Flow loss: 0.019654
+Epoch  16/50 | Flow loss: 0.020646
+Epoch  17/50 | Flow loss: 0.021008
+Epoch  18/50 | Flow loss: 0.020548
+Epoch  19/50 | Flow loss: 0.020021
+Epoch  20/50 | Flow loss: 0.020778
+Epoch  21/50 | Flow loss: 0.021299
+Epoch  22/50 | Flow loss: 0.020391
+Epoch  23/50 | Flow loss: 0.020327
+Epoch  24/50 | Flow loss: 0.020609
+Epoch  25/50 | Flow loss: 0.019981
+Epoch  26/50 | Flow loss: 0.020330
+Epoch  27/50 | Flow loss: 0.020049
+Epoch  28/50 | Flow loss: 0.020417
+Epoch  29/50 | Flow loss: 0.020544
+Epoch  30/50 | Flow loss: 0.020240
+Epoch  31/50 | Flow loss: 0.019781
+Epoch  32/50 | Flow loss: 0.019340
+Epoch  33/50 | Flow loss: 0.021082
+Epoch  34/50 | Flow loss: 0.019856
+Epoch  35/50 | Flow loss: 0.019557
+Epoch  36/50 | Flow loss: 0.020600
+Epoch  37/50 | Flow loss: 0.020957
+Epoch  38/50 | Flow loss: 0.019992
+Epoch  39/50 | Flow loss: 0.019928
+Epoch  40/50 | Flow loss: 0.019337

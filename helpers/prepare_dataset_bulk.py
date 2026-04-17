@@ -12,7 +12,6 @@ Writes:
     datasets/coords.npy             shape (N, 2)  float32  -- columns: [lat, lon]
     datasets/panel_ids.npy          shape (N,)    string
 """
-
 import argparse
 import os
 import sys
@@ -67,234 +66,142 @@ def load_coords_csv(path):
 
 # ── NetCDF loader with encoding-aware extraction ──────────────────────────────
 
-def extract_variable(nc_path, var_name):
+def extract_variable(ds, var_name):
     """
-    Extract a 2-D variable from a NetCDF file as a float32 numpy array
-    with shape (T, N), handling all common PVGIS encoding issues:
-
-      1. Packed integers  (scale_factor / add_offset attributes)
-      2. Masked fill values converting valid data to NaN/0
-      3. decode_times failures (non-CF time axes)
-
-    Returns: (data (T, N), time_dim_name, loc_dim_name)
+    Extract a 2-D variable from an open xarray dataset as a float32 numpy array
+    with shape (T, N).
     """
-
-    # Open exactly the same way a Jupyter notebook does -- no extra kwargs.
-    # Using mask_and_scale + decode_times together zeros out values on
-    # certain xarray/netCDF4 version combinations, so we keep it plain.
-    ds = xr.open_dataset(nc_path)
-
-    # ── Print full structure ───────────────────────────────────────────────────
-    print("\n      --- NetCDF structure ---")
-    print("      Dimensions:")
-    for dim, size in ds.dims.items():
-        print(f"        {dim}: {size}")
-    print("      Variables:")
-    for vname, var in ds.data_vars.items():
-        print(f"        {vname}{list(var.dims)}  shape={var.shape}")
-    print("      --- end structure ---\n")
-
     if var_name not in ds:
         print(f"  ERROR: '{var_name}' not in NetCDF.")
         print(f"  Available: {list(ds.data_vars)}")
-        print(f"  Re-run with --var <name>")
         sys.exit(1)
 
     da = ds[var_name]
-    print(f"      Extracting '{var_name}'{list(da.dims)}  shape={da.shape}")
-    print(f"      Encoding   : {da.encoding}")
-    print(f"      Attributes : {da.attrs}")
-
-    # ── Identify time vs location axes ────────────────────────────────────────
+    
+    # Identify time vs location axes
     TIME_NAMES     = {"time", "t", "datetime", "date", "step"}
-    LOCATION_NAMES = {"location", "loc", "station", "site",
-                      "panel", "point", "index", "id"}
+    LOCATION_NAMES = {"location", "loc", "station", "site", "panel", "point", "index", "id"}
 
     dims_lower = [d.lower() for d in da.dims]
-
-    time_axis = next(
-        (i for i, d in enumerate(dims_lower) if d in TIME_NAMES), None)
-    loc_axis  = next(
-        (i for i, d in enumerate(dims_lower) if d in LOCATION_NAMES), None)
+    time_axis = next((i for i, d in enumerate(dims_lower) if d in TIME_NAMES), None)
+    loc_axis  = next((i for i, d in enumerate(dims_lower) if d in LOCATION_NAMES), None)
 
     if time_axis is None or loc_axis is None:
-        print(f"  WARNING: cannot identify axes by name (dims={list(da.dims)}).")
-        print(f"  Using heuristic: larger axis = time.")
         if da.shape[0] >= da.shape[1]:
             time_axis, loc_axis = 0, 1
         else:
             time_axis, loc_axis = 1, 0
 
-    print(f"      time axis     : '{da.dims[time_axis]}' "
-          f"(axis {time_axis}, size {da.shape[time_axis]})")
-    print(f"      location axis : '{da.dims[loc_axis]}'  "
-          f"(axis {loc_axis}, size {da.shape[loc_axis]})")
-
-    # ── Extract values with masking awareness ─────────────────────────────────
-    # .values on a masked DataArray returns a numpy array where masked cells
-    # become np.nan. We convert nan -> 0 later in the pipeline.
     raw = da.values
 
-    # If the array came back as integer dtype, scale/offset was NOT applied
-    # by xarray (can happen when mask_and_scale is ignored for some backends).
-    # Apply manually in that case.
+    # Manual scale/offset if needed
     if np.issubdtype(raw.dtype, np.integer):
         scale  = da.encoding.get("scale_factor",  da.attrs.get("scale_factor",  1.0))
         offset = da.encoding.get("add_offset",    da.attrs.get("add_offset",    0.0))
         fill   = da.encoding.get("_FillValue",    da.attrs.get("_FillValue",    None))
-        print(f"      Packed integer detected -- applying manually: "
-              f"scale={scale}, offset={offset}, fill={fill}")
         raw = raw.astype(np.float64)
         if fill is not None:
             raw[raw == fill] = np.nan
         raw = raw * scale + offset
 
-    # Transpose to (T, N) if stored as (N, T)
+    # Transpose to (T, N)
     if time_axis == 0 and loc_axis == 1:
         arr = raw.astype(np.float32)
     elif time_axis == 1 and loc_axis == 0:
         arr = raw.T.astype(np.float32)
     else:
-        print(f"  ERROR: unexpected dims {da.dims} -- only 2-D variables supported.")
+        print(f"  ERROR: unexpected dims {da.dims} for {var_name}.")
         sys.exit(1)
 
-    ds.close()
-    return arr, da.dims[time_axis], da.dims[loc_axis]
+    return arr
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Prepare irradiance_train.npy and coords.npy from PVGIS NetCDF + CSV"
+        description="Prepare irradiance_train.npy, sun_height.npy, and coords.npy from PVGIS NetCDF + CSV"
     )
-    parser.add_argument("--nc",     required=True, nargs="+",
-                        help="Path(s) to PVGIS NetCDF file(s); multiple files are concatenated along the time axis")
+    parser.add_argument("--nc",      required=True, nargs="+",
+                        help="Path(s) to PVGIS NetCDF file(s)")
     parser.add_argument("--coords", required=True,
                         help="Path to CSV file with columns: ID, lat, long")
-    parser.add_argument("--var",    default="solar_irradiance_poa",
-                        help="NetCDF variable name  (default: solar_irradiance_poa)")
-    parser.add_argument("--out",    default="datasets",
-                        help="Output directory  (default: datasets/)")
+    parser.add_argument("--irrad",   default="solar_irradiance_poa",
+                        help="Irradiance variable name (default: solar_irradiance_poa)")
+    parser.add_argument("--sun",     default="sun_height",
+                        help="Sun height variable name (default: sun_height)")
+    parser.add_argument("--out",     default="datasets",
+                        help="Output directory (default: datasets/)")
     args = parser.parse_args()
 
     os.makedirs(args.out, exist_ok=True)
 
-    # ── 1. Coordinates ────────────────────────────────────────────────────────
+    # 1. Coordinates
     print(f"\n[1/3] Reading coordinates: {args.coords}")
     panel_ids, coords = load_coords_csv(args.coords)
     N_csv = len(coords)
-    print(f"      Panels  : {N_csv}")
-    print(f"      Lat     : {coords[:,0].min():.5f} -> {coords[:,0].max():.5f}")
-    print(f"      Lon     : {coords[:,1].min():.5f} -> {coords[:,1].max():.5f}")
+    print(f"      Panels: {N_csv}")
 
-    # ── 2. Irradiance ─────────────────────────────────────────────────────────
+    # 2. Extract Data
     nc_files = args.nc
     print(f"\n[2/3] Reading {len(nc_files)} NetCDF file(s)")
 
-    slices = []
+    irrad_slices = []
+    sun_slices = []
+
     for file_idx, nc_path in enumerate(nc_files):
         print(f"\n  [{file_idx + 1}/{len(nc_files)}] {nc_path}")
-        arr, time_dim, loc_dim = extract_variable(nc_path, args.var)
-        T_i, N_nc = arr.shape
-        print(f"      Output shape : (T={T_i}, N={N_nc})")
-
+        ds = xr.open_dataset(nc_path)
+        
+        # Extract both variables
+        irr_arr = extract_variable(ds, args.irrad)
+        sun_arr = extract_variable(ds, args.sun)
+        
+        T_i, N_nc = irr_arr.shape
+        
         if N_nc != N_csv:
-            print(
-                f"\n  ERROR: CSV has {N_csv} panels but '{nc_path}' has {N_nc} locations."
-                f"\n  Both files must list panels in the same order."
-            )
+            print(f"\n  ERROR: CSV has {N_csv} panels but '{nc_path}' has {N_nc} locations.")
             sys.exit(1)
 
-        ds_check = xr.open_dataset(nc_path)
-        if "lat" in ds_check and "lon" in ds_check:
-            nc_lat = ds_check["lat"].values.astype(np.float32)
-            nc_lon = ds_check["lon"].values.astype(np.float32)
-            max_lat_err = float(np.abs(nc_lat - coords[:, 0]).max())
-            max_lon_err = float(np.abs(nc_lon - coords[:, 1]).max())
-            if max_lat_err > 0.01 or max_lon_err > 0.01:
-                print(f"\n  WARNING: CSV vs NetCDF coords differ by up to "
-                      f"{max_lat_err:.5f} lat / {max_lon_err:.5f} lon. "
-                      f"Using CSV as source of truth.")
-            else:
-                print(f"      Coord cross-check OK  "
-                      f"(max diff: {max_lat_err:.6f} lat, {max_lon_err:.6f} lon)")
-        ds_check.close()
+        # Optional Coord Check (First file only usually sufficient, but we do it here)
+        if "lat" in ds and "lon" in ds:
+            nc_lat = ds["lat"].values.astype(np.float32)
+            nc_lon = ds["lon"].values.astype(np.float32)
+            if float(np.abs(nc_lat - coords[:, 0]).max()) > 0.01:
+                print("  WARNING: Coordinate mismatch detected.")
 
-        slices.append(arr)
+        irrad_slices.append(irr_arr)
+        sun_slices.append(sun_arr)
+        ds.close()
 
-    if len(slices) == 1:
-        irr = slices[0]
-    else:
-        print(f"\n  Concatenating {len(slices)} arrays along time axis ...")
-        irr = np.concatenate(slices, axis=0)
+    # Concatenate
+    print(f"\n  Concatenating arrays along time axis...")
+    final_irrad = np.concatenate(irrad_slices, axis=0)
+    final_sun = np.concatenate(sun_slices, axis=0)
 
-    T, N_nc = irr.shape
-    print(f"\n      Combined shape : (T={T}, N={N_nc})")
+    # Data Quality Cleanup
+    def clean_data(arr, name):
+        n_nan = int(np.isnan(arr).sum())
+        if n_nan > 0:
+            print(f"  WARNING: {n_nan} NaNs in {name} - replacing with 0.0")
+            return np.nan_to_num(arr, nan=0.0, posinf=0.0, neginf=0.0)
+        return arr
 
-    # ── 3. Data quality ───────────────────────────────────────────────────────
-    n_nan  = int(np.isnan(irr).sum())
-    n_inf  = int(np.isinf(irr).sum())
-    if n_nan > 0 or n_inf > 0:
-        print(f"  WARNING: {n_nan} NaN and {n_inf} Inf values -- replacing with 0.0.")
-        irr = np.nan_to_num(irr, nan=0.0, posinf=0.0, neginf=0.0)
+    final_irrad = clean_data(final_irrad, "irradiance")
+    final_sun = clean_data(final_sun, "sun_height")
 
-    n_zero   = int((irr == 0.0).sum())
-    total    = irr.size
-    zero_pct = 100.0 * n_zero / total
-    nonzero  = irr[irr > 0]
-
-    print(f"\n      Irradiance statistics:")
-    print(f"        min          : {irr.min():.4f} W/m2")
-    print(f"        max          : {irr.max():.4f} W/m2")
-    print(f"        mean (all)   : {irr.mean():.4f} W/m2")
-    print(f"        zeros        : {n_zero:,} / {total:,}  ({zero_pct:.1f}%)")
-    if len(nonzero) > 0:
-        print(f"        mean (daytime): {nonzero.mean():.4f} W/m2")
-
-    if irr.max() == 0.0:
-        print(
-            "\n  ERROR: all values are zero after decoding."
-            "\n"
-            "\n  Possible causes and fixes:"
-            "\n    1. Wrong variable name"
-            "\n       -> Re-run with a different --var (see structure above)"
-            "\n"
-            "\n    2. scale_factor / add_offset not applied by xarray"
-            "\n       -> Run the diagnostic script below and share the output:"
-            "\n          python inspect_nc.py your_file.nc"
-            "\n"
-            "\n    3. File uses a non-standard fill value that masked all data"
-            "\n       -> Check '_FillValue' in the attributes printed above"
-            "\n"
-            "\n    4. File is corrupt or empty"
-            "\n       -> Try: ncdump -h your_file.nc"
-        )
-        sys.exit(1)
-
-    if zero_pct > 70.0:
-        print(
-            f"\n  NOTE: {zero_pct:.1f}% zeros is normal for hourly PVGIS data"
-            f"\n  (nighttime + overcast hours are legitimately zero)."
-        )
-
-    # ── 4. Save ───────────────────────────────────────────────────────────────
+    # 3. Save
     print(f"\n[3/3] Saving to {args.out}/")
 
-    irr_path    = os.path.join(args.out, "irradiance_train.npy")
-    coords_path = os.path.join(args.out, "coords.npy")
-    ids_path    = os.path.join(args.out, "panel_ids.npy")
+    np.save(os.path.join(args.out, "irradiance_train.npy"), final_irrad)
+    np.save(os.path.join(args.out, "sun_height.npy"),      final_sun)
+    np.save(os.path.join(args.out, "coords.npy"),          coords)
+    np.save(os.path.join(args.out, "panel_ids.npy"),       panel_ids)
 
-    np.save(irr_path,    irr)
-    np.save(coords_path, coords)
-    np.save(ids_path,    panel_ids)
-
-    print(f"      irradiance_train.npy  shape={irr.shape}   dtype=float32")
-    print(f"      coords.npy            shape={coords.shape}  dtype=float32")
-    print(f"      panel_ids.npy         shape={panel_ids.shape}")
-
-    print("\nDone. Next step: python train_stage1.py")
-
+    print(f"      irradiance_train.npy  shape={final_irrad.shape}")
+    print(f"      sun_height.npy        shape={final_sun.shape}")
+    print(f"      coords.npy            shape={coords.shape}")
+    print("\nDone.")
 
 if __name__ == "__main__":
     main()

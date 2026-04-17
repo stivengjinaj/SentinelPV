@@ -206,7 +206,7 @@ class IrradianceModel(nn.Module):
         self.n_hidden  = n_hidden
         cond_dim       = n_hidden // 4
 
-        in_dim = space_dim + fun_dim + ref * ref   # 2 + 1 + 16 = 19
+        in_dim = space_dim + fun_dim + 1 + ref * ref   # 2 + 1 + 1 + 16 = 20
 
         self.preprocess = nn.Sequential(
             nn.LayerNorm(in_dim),
@@ -215,7 +215,7 @@ class IrradianceModel(nn.Module):
         )
 
         # Sensor encoder: (lat, lon, irradiance) -> hidden
-        sensor_in = space_dim + fun_dim            # 2 + 1 = 3
+        sensor_in = space_dim + fun_dim + 1            # 2 + 1 + 1 = 4
         self.sensor_encoder   = nn.Sequential(nn.Linear(sensor_in, n_hidden),  nn.LayerNorm(n_hidden))
         self.sensor_encoder_2 = nn.Sequential(nn.Linear(sensor_in, cond_dim),  nn.LayerNorm(cond_dim))
 
@@ -252,6 +252,7 @@ class IrradianceModel(nn.Module):
         """
         pos = batch['pos']   # (B, N, 2)
         y   = batch['y']     # (B, N, 1)
+        h_sun = batch['h_sun']  # (B, N, 1)
 
         B, N, _ = y.shape
         device  = y.device
@@ -271,16 +272,17 @@ class IrradianceModel(nn.Module):
             pos = pos.unsqueeze(0).expand(B, -1, -1)
 
         ref_dists = self._ref_grid_distances(pos)          # (B, N, ref^2)
-        x = torch.cat([pos, y_t, ref_dists], dim=-1)       # (B, N, 2+1+ref^2)
+        x = torch.cat([pos, y_t, h_sun, ref_dists], dim=-1)       # (B, N, 20)
         fx = self.preprocess(x) + self.placeholder[None, None, :]
 
         # Random sensor subset (10–200)
         n_sensors = random.randint(10, min(200, N))
         idx       = torch.randperm(N, device=device)[:n_sensors]
         s_pos     = pos[:, idx, :]    # (B, n_sensors, 2)
-        s_y       = y[:, idx, :]     # (B, n_sensors, 1) <- ground-truth irradiance at sensors
+        s_y       = y[:, idx, :]     # (B, n_sensors, 1) ground-truth irradiance at sensors
+        s_h         = h_sun[:, idx, :]   # (B, S, 1)
 
-        sensor_feat = torch.cat([s_pos, s_y], dim=-1)      # (B, n_sensors, 3)
+        sensor_feat = torch.cat([s_pos, s_h, s_y], dim=-1)      # (B, n_sensors, 4)
         s    = self.sensor_encoder(sensor_feat)             # (B, n_sensors, n_hidden)
         s2   = self.sensor_encoder_2(sensor_feat)           # (B, n_sensors, cond_dim)
 
@@ -298,6 +300,7 @@ class IrradianceModel(nn.Module):
         self,
         pos:           torch.Tensor,    # (N, 2)
         y_full:        torch.Tensor,    # (N, 1)  — ground truth (for error computation)
+        h_sun_full:     torch.Tensor,    # (N, 1)  sun height — context only
         sensor_indices: torch.Tensor,   # (S,)    — which panels are sensors
         n_steps:       int = 5,
         n_samples:     int = 1,
@@ -311,12 +314,14 @@ class IrradianceModel(nn.Module):
         """
         device = pos.device
         pos_bc = pos.unsqueeze(0)           # (1, N, 2)
+        h_sun_bc  = h_sun_full.unsqueeze(0)
         ref_d  = self._ref_grid_distances(pos_bc)
 
         s_pos  = pos[sensor_indices].unsqueeze(0)    # (1, S, 2)
         s_y    = y_full[sensor_indices].unsqueeze(0) # (1, S, 1)
-        sensor_feat = torch.cat([s_pos, s_y], dim=-1)
+        s_h   = h_sun_full[sensor_indices].unsqueeze(0) # (1, S, 1)
 
+        sensor_feat = torch.cat([s_pos, s_y, s_h], dim=-1)
         s    = self.sensor_encoder(sensor_feat)
         s2   = self.sensor_encoder_2(sensor_feat)
 
@@ -328,7 +333,7 @@ class IrradianceModel(nn.Module):
 
             for i in range(n_steps):
                 t_val = torch.tensor([i / n_steps], device=device)
-                x     = torch.cat([pos_bc, z, ref_d], dim=-1)
+                x     = torch.cat([pos_bc, z, h_sun_bc, ref_d], dim=-1)
                 fx    = self.preprocess(x) + self.placeholder[None, None, :]
                 t_emb = self.t_embedder(t_val) + s2.mean(dim=1)
                 x_out = self.transformer(fx, t_emb, s)

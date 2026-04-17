@@ -187,57 +187,45 @@ class IrradianceReconstructor:
         return indices
 
     @torch.no_grad()
-    def _reconstruct(self, s_irrad_norm: np.ndarray) -> np.ndarray:
-        """
-        Run the flow ODE to reconstruct the full field.
-        s_irrad_norm : (S,) normalised irradiance at sentinel positions
-        Returns      : (N,) normalised irradiance for all panels
-        """
-        S = len(s_irrad_norm)
-        pos    = self.all_pos                                       # (N, 2)
-        s_idx  = torch.tensor(self.sentinel_indices, device=self.device)
+    def _reconstruct(
+        self,
+        s_irrad_norm: np.ndarray,   # (S,)
+        s_hsun_norm:  np.ndarray,   # (S,)
+    ) -> np.ndarray:                # returns (N,) irradiance only
 
-        # Sentinel positions and observations as tensors
-        s_pos  = pos[s_idx]                                         # (S, 2)
-        s_y    = torch.tensor(
-            s_irrad_norm, dtype=torch.float32, device=self.device
-        ).unsqueeze(-1)                                             # (S, 1)
+        pos      = self.all_pos  # (N, 2)
+        h_sun_bc = self.all_hsun.unsqueeze(0) # (1, N, 1) — preloaded at init
+        pos_bc   = pos.unsqueeze(0)
+        ref_d    = self.model._ref_grid_distances(pos_bc)
 
-        # Encode sensor context once (same for all ODE steps)
-        sensor_feat = torch.cat([s_pos, s_y], dim=-1).unsqueeze(0) # (1, S, 3)
-        s  = self.model.sensor_encoder(sensor_feat)                 # (1, S, H)
-        s2 = self.model.sensor_encoder_2(sensor_feat)               # (1, S, H/4)
+        s_idx = torch.tensor(self.sentinel_indices, device=self.device)
+        s_pos = pos[s_idx].unsqueeze(0)
+        s_y   = torch.tensor(s_irrad_norm, dtype=torch.float32,
+                            device=self.device).unsqueeze(0).unsqueeze(-1)  # (1,S,1)
+        s_h   = torch.tensor(s_hsun_norm,  dtype=torch.float32,
+                            device=self.device).unsqueeze(0).unsqueeze(-1)  # (1,S,1)
 
-        # Reference grid distances
-        pos_bc  = pos.unsqueeze(0)                                   # (1, N, 2)
-        ref_d   = self.model._ref_grid_distances(pos_bc)             # (1, N, 16)
+        sensor_feat = torch.cat([s_pos, s_y, s_h], dim=-1)
+        s    = self.model.sensor_encoder(sensor_feat)
+        s2   = self.model.sensor_encoder_2(sensor_feat)
 
-        pred_acc = torch.zeros(
-            len(pos), 1, device=self.device, dtype=torch.float32
-        )
+        pred_acc = torch.zeros(len(pos), 1, device=self.device)
 
         for _ in range(self.n_samples):
-            z  = torch.randn(1, len(pos), 1, device=self.device)    # (1, N, 1)
+            z  = torch.randn(1, len(pos), 1, device=self.device)
             dt = 1.0 / self.n_steps
-
-            for step in range(self.n_steps):
-                t_val = torch.tensor(
-                    [step / self.n_steps],
-                    device=self.device, dtype=torch.float32,
-                )
-                x     = torch.cat([pos_bc, z, ref_d], dim=-1)       # (1, N, 19)
+            for i in range(self.n_steps):
+                t_val = torch.tensor([i / self.n_steps], device=self.device)
+                x     = torch.cat([pos_bc, z, h_sun_bc, ref_d], dim=-1)  # (1, N, 20)
                 fx    = self.model.preprocess(x) + self.model.placeholder[None, None, :]
                 t_emb = self.model.t_embedder(t_val) + s2.mean(dim=1)
                 x_out = self.model.transformer(fx, t_emb, s)
-                vel   = self.model.mlp_head(x_out, t_emb)           # (1, N, 1)
+                vel   = self.model.mlp_head(x_out, t_emb)
                 z     = z + vel * dt
+            pred_acc += z.squeeze(0)
 
-            pred_acc += z.squeeze(0)                                 # (N, 1)
-
-        pred = (pred_acc / self.n_samples).squeeze(-1)              # (N,)
-        # Clamp: irradiance is non-negative
-        pred = pred.clamp(min=0.0)
-        return pred.cpu().numpy()
+        pred = (pred_acc / self.n_samples).squeeze(-1)
+        return pred.clamp(min=0.0).cpu().numpy()
 
 
 def print_norm_constants(irrad_path: str, coords_path: str):

@@ -15,6 +15,7 @@ BATCH_SIZE  = 128
 LR          = 1e-4
 SAVE_DIR    = "./training_history/train_pvgis2005_2022_15sentinels"
 IRRAD_PATH  = "datasets/irradiance_train.npy"
+SUN_HEIGHT_PATH = "datasets/sun_height.npy"
 COORDS_PATH = "datasets/coords.npy"
 
 WANDB_PROJECT  = "physense-irradiance"
@@ -44,7 +45,7 @@ def train():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
 
-    dataset = IrradianceDataset(IRRAD_PATH, COORDS_PATH)
+    dataset = IrradianceDataset(IRRAD_PATH, SUN_HEIGHT_PATH, COORDS_PATH)
     loader  = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True,
                          num_workers=4, pin_memory=True)
     N = dataset.pos_tensor.shape[0]

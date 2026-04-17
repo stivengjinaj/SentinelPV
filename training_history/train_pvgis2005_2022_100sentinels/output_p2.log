@@ -27,3 +27,172 @@ Epoch  10/50 | Flow loss: 0.012049
 Epoch  11/50 | Flow loss: 0.012485
 Epoch  12/50 | Flow loss: 0.012349
 Epoch  13/50 | Flow loss: 0.012664
+Epoch  14/50 | Flow loss: 0.012195
+Epoch  15/50 | Flow loss: 0.011796
+Epoch  16/50 | Flow loss: 0.012499
+Epoch  17/50 | Flow loss: 0.012393
+Epoch  18/50 | Flow loss: 0.012502
+Epoch  19/50 | Flow loss: 0.011967
+Epoch  20/50 | Flow loss: 0.012190
+Epoch  21/50 | Flow loss: 0.012050
+Epoch  22/50 | Flow loss: 0.012304
+Epoch  23/50 | Flow loss: 0.012395
+Epoch  24/50 | Flow loss: 0.012319
+Epoch  25/50 | Flow loss: 0.012015
+Epoch  26/50 | Flow loss: 0.012024
+Epoch  27/50 | Flow loss: 0.012032
+Epoch  28/50 | Flow loss: 0.012346
+Epoch  29/50 | Flow loss: 0.012445
+Epoch  30/50 | Flow loss: 0.012025
+Epoch  31/50 | Flow loss: 0.012228
+Epoch  32/50 | Flow loss: 0.012081
+Epoch  33/50 | Flow loss: 0.012207
+Epoch  34/50 | Flow loss: 0.012383
+Epoch  35/50 | Flow loss: 0.012268
+Epoch  36/50 | Flow loss: 0.012400
+Epoch  37/50 | Flow loss: 0.012129
+Epoch  38/50 | Flow loss: 0.012162
+Epoch  39/50 | Flow loss: 0.012091
+Epoch  40/50 | Flow loss: 0.012172
+Epoch  41/50 | Flow loss: 0.011913
+Epoch  42/50 | Flow loss: 0.012338
+Epoch  43/50 | Flow loss: 0.012242
+Epoch  44/50 | Flow loss: 0.012496
+Epoch  45/50 | Flow loss: 0.012107
+Epoch  46/50 | Flow loss: 0.012242
+Epoch  47/50 | Flow loss: 0.012307
+Epoch  48/50 | Flow loss: 0.012346
+Epoch  49/50 | Flow loss: 0.012215
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+wandb: uploading history steps 123139-123240, summary; uploading artifact run-amf1tsg7-sentinelspositions_ep50-SPbWLQ; uploading artifact run-amf1tsg7-sentinelsfinal_positions-HE4WHQ; updating run metadata
+wandb: uploading history steps 123139-123240, summary; uploading artifact run-amf1tsg7-sentinelspositions_ep50-SPbWLQ; uploading artifact run-amf1tsg7-sentinelsfinal_positions-HE4WHQ
+wandb: uploading history steps 123139-123240, summary; uploading artifact run-amf1tsg7-sentinelsfinal_positions-HE4WHQ
+wandb: uploading history steps 123139-123240, summary
+wandb: uploading history steps 123241-123300, summary, console lines 52-159
+wandb: 
+wandb: Run history:
+wandb:          epoch ▁▁▁▂▂▂▂▂▂▃▃▃▃▃▃▄▄▄▄▄▅▅▅▅▅▆▆▆▆▆▆▇▇▇▇▇▇███
+wandb: opt/epoch_loss ▃█▆▁▄▇▆▃█▆▅▁█▇█▅▃▆▇▆▃▃▆▇▃▄▅▇▆▇▅▄▅▂▆█▄▆▆▃
+wandb:  opt/grad_norm ▂▁▁▁▁▂▁▂▂▁▂▁▁▁▁▂▂▁▂▂▁▁▁▃▁▂▂▂▂▁▁▂▁▁▁█▁▁▂▁
+wandb:  opt/step_loss ▅▅▃▆▁▇▁▃▅▃█▇▃▅▃▃▂▃▃▄▅▇▅▂▆▃█▁▂▄▄▂▃▄▄▄▂▅▃▅
+wandb: 
+wandb: Run summary:
+wandb:          epoch 50
+wandb: final_opt_loss 0.01204
+wandb:  num_sentinels 100
+wandb: opt/epoch_loss 0.01204
+wandb:  opt/grad_norm 0.00696
+wandb:  opt/step_loss 0.00728
+wandb:    result_path ./training_history/t...
+wandb: 
+wandb: 🚀 View run sentinelpv-stage2 at: https://wandb.ai/stivengjinaj-politecnico-di-torino/physense-irradiance/runs/amf1tsg7
+wandb: ⭐️ View project at: https://wandb.ai/stivengjinaj-politecnico-di-torino/physense-irradiance
+wandb: Synced 5 W&B file(s), 7 media file(s), 14 artifact file(s) and 1 other file(s)
+wandb: Find logs at: ./wandb/run-20260417_083655-amf1tsg7/logs
+Epoch  50/50 | Flow loss: 0.012038
+
+=======================================================
+  Optimisation complete — 100 sentinel panels found
+=======================================================
+  Sentinel  1: panel #254  lat=44.58471  lon=9.19877
+  Sentinel  2: panel #89  lat=44.34008  lon=6.87718
+  Sentinel  3: panel #254  lat=44.58471  lon=9.19877
+  Sentinel  4: panel #434  lat=44.80977  lon=9.19955
+  Sentinel  5: panel #89  lat=44.34008  lon=6.87718
+  Sentinel  6: panel #254  lat=44.58471  lon=9.19877
+  Sentinel  7: panel #254  lat=44.58471  lon=9.19877
+  Sentinel  8: panel #89  lat=44.34008  lon=6.87718
+  Sentinel  9: panel #902  lat=45.51410  lon=7.08954
+  Sentinel 10: panel #89  lat=44.34008  lon=6.87718
+  Sentinel 11: panel #89  lat=44.34008  lon=6.87718
+  Sentinel 12: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 13: panel #89  lat=44.34008  lon=6.87718
+  Sentinel 14: panel #89  lat=44.34008  lon=6.87718
+  Sentinel 15: panel #682  lat=45.14597  lon=6.65667
+  Sentinel 16: panel #89  lat=44.34008  lon=6.87718
+  Sentinel 17: panel #434  lat=44.80977  lon=9.19955
+  Sentinel 18: panel #89  lat=44.34008  lon=6.87718
+  Sentinel 19: panel #682  lat=45.14597  lon=6.65667
+  Sentinel 20: panel #434  lat=44.80977  lon=9.19955
+  Sentinel 21: panel #89  lat=44.34008  lon=6.87718
+  Sentinel 22: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 23: panel #89  lat=44.34008  lon=6.87718
+  Sentinel 24: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 25: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 26: panel #89  lat=44.34008  lon=6.87718
+  Sentinel 27: panel #902  lat=45.51410  lon=7.08954
+  Sentinel 28: panel #89  lat=44.34008  lon=6.87718
+  Sentinel 29: panel #434  lat=44.80977  lon=9.19955
+  Sentinel 30: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 31: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 32: panel #581  lat=45.01106  lon=6.66218
+  Sentinel 33: panel #89  lat=44.34008  lon=6.87718
+  Sentinel 34: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 35: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 36: panel #434  lat=44.80977  lon=9.19955
+  Sentinel 37: panel #434  lat=44.80977  lon=9.19955
+  Sentinel 38: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 39: panel #1148  lat=46.47397  lon=8.48910
+  Sentinel 40: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 41: panel #434  lat=44.80977  lon=9.19955
+  Sentinel 42: panel #89  lat=44.34008  lon=6.87718
+  Sentinel 43: panel #682  lat=45.14597  lon=6.65667
+  Sentinel 44: panel #682  lat=45.14597  lon=6.65667
+  Sentinel 45: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 46: panel #682  lat=45.14597  lon=6.65667
+  Sentinel 47: panel #682  lat=45.14597  lon=6.65667
+  Sentinel 48: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 49: panel #682  lat=45.14597  lon=6.65667
+  Sentinel 50: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 51: panel #89  lat=44.34008  lon=6.87718
+  Sentinel 52: panel #89  lat=44.34008  lon=6.87718
+  Sentinel 53: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 54: panel #89  lat=44.34008  lon=6.87718
+  Sentinel 55: panel #682  lat=45.14597  lon=6.65667
+  Sentinel 56: panel #89  lat=44.34008  lon=6.87718
+  Sentinel 57: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 58: panel #1148  lat=46.47397  lon=8.48910
+  Sentinel 59: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 60: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 61: panel #434  lat=44.80977  lon=9.19955
+  Sentinel 62: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 63: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 64: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 65: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 66: panel #209  lat=44.53819  lon=8.38045
+  Sentinel 67: panel #89  lat=44.34008  lon=6.87718
+  Sentinel 68: panel #1148  lat=46.47397  lon=8.48910
+  Sentinel 69: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 70: panel #682  lat=45.14597  lon=6.65667
+  Sentinel 71: panel #682  lat=45.14597  lon=6.65667
+  Sentinel 72: panel #1148  lat=46.47397  lon=8.48910
+  Sentinel 73: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 74: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 75: panel #682  lat=45.14597  lon=6.65667
+  Sentinel 76: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 77: panel #89  lat=44.34008  lon=6.87718
+  Sentinel 78: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 79: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 80: panel #89  lat=44.34008  lon=6.87718
+  Sentinel 81: panel #89  lat=44.34008  lon=6.87718
+  Sentinel 82: panel #209  lat=44.53819  lon=8.38045
+  Sentinel 83: panel #89  lat=44.34008  lon=6.87718
+  Sentinel 84: panel #581  lat=45.01106  lon=6.66218
+  Sentinel 85: panel #902  lat=45.51410  lon=7.08954
+  Sentinel 86: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 87: panel #89  lat=44.34008  lon=6.87718
+  Sentinel 88: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 89: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 90: panel #89  lat=44.34008  lon=6.87718
+  Sentinel 91: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 92: panel #89  lat=44.34008  lon=6.87718
+  Sentinel 93: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 94: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 95: panel #89  lat=44.34008  lon=6.87718
+  Sentinel 96: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 97: panel #682  lat=45.14597  lon=6.65667
+  Sentinel 98: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 99: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 100: panel #254  lat=44.58471  lon=9.19877
+
+  Saved to: ./training_history/train_pvgis2005_2022_100sentinels/sentinel_panels.npy

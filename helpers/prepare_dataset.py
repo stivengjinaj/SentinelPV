@@ -172,8 +172,10 @@ def main():
                         help="Path to PVGIS NetCDF file")
     parser.add_argument("--coords", required=True,
                         help="Path to CSV file with columns: ID, lat, long")
-    parser.add_argument("--var",    default="solar_irradiance_poa",
-                        help="NetCDF variable name  (default: solar_irradiance_poa)")
+    parser.add_argument("--irrad",    default="solar_irradiance_poa",
+                        help="NetCDF irradiance variable name  (default: solar_irradiance_poa)")
+    parser.add_argument("--sun",    default="sun_height",
+                        help="NetCDF sun height variable name  (default: sun_height)")
     parser.add_argument("--out",    default="datasets",
                         help="Output directory  (default: datasets/)")
     args = parser.parse_args()
@@ -188,11 +190,17 @@ def main():
     print(f"      Lat     : {coords[:,0].min():.5f} -> {coords[:,0].max():.5f}")
     print(f"      Lon     : {coords[:,1].min():.5f} -> {coords[:,1].max():.5f}")
 
-    # ── 2. Irradiance ─────────────────────────────────────────────────────────
+    # ── Irradiance ─────────────────────────────────────────────────────────
     print(f"\n[2/3] Reading NetCDF: {args.nc}")
-    irr, time_dim, loc_dim = extract_variable(args.nc, args.var)
+    irr, time_dim, loc_dim = extract_variable(args.nc, args.irrad)
     T, N_nc = irr.shape
     print(f"      Output shape : (T={T}, N={N_nc})")
+
+    # ── Sun height ─────────────────────────────────────────────────────────
+    print(f"\n[2/3] Reading NetCDF: {args.nc}")
+    sun, sun_time_dim, sun_loc_dim = extract_variable(args.nc, args.sun)
+    T2, N_nc2 = sun.shape
+    print(f"      Sun height output shape : (T={T2}, N={N_nc2})")
 
     # ── 3. Alignment check ────────────────────────────────────────────────────
     if N_csv != N_nc:
@@ -218,17 +226,20 @@ def main():
                   f"(max diff: {max_lat_err:.6f} lat, {max_lon_err:.6f} lon)")
     ds_check.close()
 
-    # ── 4. Data quality ───────────────────────────────────────────────────────
+    # ── Data quality ───────────────────────────────────────────────────────
     n_nan  = int(np.isnan(irr).sum())
+    n_nan2 = int(np.isnan(sun).sum())
     n_inf  = int(np.isinf(irr).sum())
-    if n_nan > 0 or n_inf > 0:
+    n_inf2 = int(np.isinf(sun).sum())
+    if n_nan > 0 or n_inf > 0 or n_nan2 > 0 or n_inf2 > 0:
         print(f"  WARNING: {n_nan} NaN and {n_inf} Inf values -- replacing with 0.0.")
         irr = np.nan_to_num(irr, nan=0.0, posinf=0.0, neginf=0.0)
 
-    n_zero   = int((irr == 0.0).sum())
-    total    = irr.size
+    n_zero   = int((irr == 0.0).sum()) + int((sun == 0.0).sum())
+    total    = irr.size + sun.size
     zero_pct = 100.0 * n_zero / total
     nonzero  = irr[irr > 0]
+    nonzero2 = sun[sun > 0]
 
     print(f"\n      Irradiance statistics:")
     print(f"        min          : {irr.min():.4f} W/m2")
@@ -236,9 +247,12 @@ def main():
     print(f"        mean (all)   : {irr.mean():.4f} W/m2")
     print(f"        zeros        : {n_zero:,} / {total:,}  ({zero_pct:.1f}%)")
     if len(nonzero) > 0:
-        print(f"        mean (daytime): {nonzero.mean():.4f} W/m2")
+        print(f"        Irradiance mean (daytime): {nonzero.mean():.4f} W/m2")
+    
+    if len(nonzero2) > 0:
+        print(f"        Sun height mean: {nonzero2.mean():.4f}")
 
-    if irr.max() == 0.0:
+    if irr.max() == 0.0 or sun.max() == 0.0:
         print(
             "\n  ERROR: all values are zero after decoding."
             "\n"
@@ -264,18 +278,21 @@ def main():
             f"\n  (nighttime + overcast hours are legitimately zero)."
         )
 
-    # ── 5. Save ───────────────────────────────────────────────────────────────
+    # ── Save ───────────────────────────────────────────────────────────────
     print(f"\n[3/3] Saving to {args.out}/")
 
     irr_path    = os.path.join(args.out, "irradiance_train.npy")
+    sun_path    = os.path.join(args.out, "sun_height.npy")
     coords_path = os.path.join(args.out, "coords.npy")
     ids_path    = os.path.join(args.out, "panel_ids.npy")
 
-    np.save(irr_path,    irr)
+    np.save(irr_path, irr)
+    np.save(sun_path, sun)
     np.save(coords_path, coords)
-    np.save(ids_path,    panel_ids)
+    np.save(ids_path, panel_ids)
 
     print(f"      irradiance_train.npy  shape={irr.shape}   dtype=float32")
+    print(f"      sun_height.npy  shape={sun.shape}   dtype=float32")
     print(f"      coords.npy            shape={coords.shape}  dtype=float32")
     print(f"      panel_ids.npy         shape={panel_ids.shape}")
 

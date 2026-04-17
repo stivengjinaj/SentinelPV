@@ -66,43 +66,40 @@ def sample_idw(
 def flow_loss_for_sentinels(
     model:        IrradianceModel,
     batch:        dict,
-    sentinel_pos: torch.Tensor,   # (S, 2) — differentiable
+    sentinel_pos: torch.Tensor,
     device:       torch.device,
 ) -> torch.Tensor:
-    """
-    Mirrors IrradianceModel.forward() but uses externally supplied sentinel
-    positions so gradients propagate into sentinel_pos.
-    """
-    pos = batch['pos'].to(device)   # (B, N, 2)
-    y   = batch['y'].to(device)     # (B, N, 1)
+
+    pos   = batch['pos'].to(device)    # (B, N, 2)
+    y     = batch['y'].to(device)      # (B, N, 1)
+    h_sun = batch['h_sun'].to(device)  # (B, N, 1)
     B, N, _ = y.shape
 
-    # Flow interpolation
-    u    = torch.randn(B, device=device)
-    t    = torch.sigmoid(u)
-    t_bc = t.view(B, 1, 1)
-    noise  = torch.randn_like(y)
-    y_t    = t_bc * y + (1. - t_bc) * noise
-    target = y - noise
+    # Flow interpolation on irradiance only
+    u       = torch.randn(B, device=device)
+    t       = torch.sigmoid(u)
+    t_bc    = t.view(B, 1, 1)
+    noise   = torch.randn_like(y)
+    y_t     = t_bc * y + (1. - t_bc) * noise
+    target  = y - noise                               # (B, N, 1)
 
-    # Field tokens
     ref_d = model._ref_grid_distances(pos)
-    x     = torch.cat([pos, y_t, ref_d], dim=-1)
+    x     = torch.cat([pos, y_t, h_sun, ref_d], dim=-1)   # (B, N, 20)
     fx    = model.preprocess(x) + model.placeholder[None, None, :]
 
-    # Sentinel sensor features (differentiable path through IDW)
-    s_pos_batch = sentinel_pos.unsqueeze(0).expand(B, -1, -1)   # (B, S, 2)
-    s_y         = sample_idw(s_pos_batch, pos, y)                # (B, S, 1)
-    sensor_feat = torch.cat([s_pos_batch, s_y], dim=-1)          # (B, S, 3)
+    s_pos_batch = sentinel_pos.unsqueeze(0).expand(B, -1, -1)
+    s_y  = sample_idw(s_pos_batch, pos, y)             # (B, S, 1)
+    s_h  = sample_idw(s_pos_batch, pos, h_sun)         # (B, S, 1)
 
+    sensor_feat = torch.cat([s_pos_batch, s_y, s_h], dim=-1)  # (B, S, 4)
     s    = model.sensor_encoder(sensor_feat)
     s2   = model.sensor_encoder_2(sensor_feat)
+
     t_emb = model.t_embedder(t) + s2.mean(dim=1)
-
     x_out = model.transformer(fx, t_emb, s)
-    pred  = model.mlp_head(x_out, t_emb)
+    pred  = model.mlp_head(x_out, t_emb) # (B, N, 1)
 
-    return nn.functional.mse_loss(pred, target)
+    return nn.functional.mse_loss(pred, target)   # irradiance loss only
 
 
 # Projection: snap each sentinel to the nearest real panel

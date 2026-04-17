@@ -1,0 +1,114 @@
+nohup: ignoring input
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from /home/sgjinaj/.netrc.
+wandb: Currently logged in as: stivengjinaj (stivengjinaj-politecnico-di-torino) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: setting up run emsceype
+wandb: Tracking run with wandb version 0.25.1
+wandb: Run data is saved locally in /home/sgjinaj/SentinelPV_Physense/wandb/run-20260416_090227-emsceype
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run sentinelpv-stage2
+wandb: ⭐️ View project at https://wandb.ai/stivengjinaj-politecnico-di-torino/physense-irradiance
+wandb: 🚀 View run at https://wandb.ai/stivengjinaj-politecnico-di-torino/physense-irradiance/runs/emsceype
+Device: cuda
+Dataset: 157776 timesteps | 1149 panels
+Stage 1 checkpoint loaded: ./training_history/train_pvgis2005_2022_15sentinels/irradiance_stage1_final.pth
+
+Starting Stage 2: optimising 15 sentinel positions...
+
+Epoch   1/50 | Flow loss: 0.012893
+Epoch   2/50 | Flow loss: 0.012850
+Epoch   3/50 | Flow loss: 0.012967
+Epoch   4/50 | Flow loss: 0.012914
+Epoch   5/50 | Flow loss: 0.013001
+Epoch   6/50 | Flow loss: 0.012996
+Epoch   7/50 | Flow loss: 0.013046
+Epoch   8/50 | Flow loss: 0.013051
+Epoch   9/50 | Flow loss: 0.013133
+Epoch  10/50 | Flow loss: 0.013130
+Epoch  11/50 | Flow loss: 0.013157
+Epoch  12/50 | Flow loss: 0.013193
+Epoch  13/50 | Flow loss: 0.013073
+Epoch  14/50 | Flow loss: 0.012868
+Epoch  15/50 | Flow loss: 0.013195
+Epoch  16/50 | Flow loss: 0.012981
+Epoch  17/50 | Flow loss: 0.013055
+Epoch  18/50 | Flow loss: 0.012948
+Epoch  19/50 | Flow loss: 0.013021
+Epoch  20/50 | Flow loss: 0.012832
+Epoch  21/50 | Flow loss: 0.012983
+Epoch  22/50 | Flow loss: 0.013083
+Epoch  23/50 | Flow loss: 0.013110
+Epoch  24/50 | Flow loss: 0.012894
+Epoch  25/50 | Flow loss: 0.012757
+Epoch  26/50 | Flow loss: 0.012862
+Epoch  27/50 | Flow loss: 0.013113
+Epoch  28/50 | Flow loss: 0.013151
+Epoch  29/50 | Flow loss: 0.013202
+Epoch  30/50 | Flow loss: 0.013019
+Epoch  31/50 | Flow loss: 0.012905
+Epoch  32/50 | Flow loss: 0.013147
+Epoch  33/50 | Flow loss: 0.012946
+Epoch  34/50 | Flow loss: 0.013249
+Epoch  35/50 | Flow loss: 0.012961
+Epoch  36/50 | Flow loss: 0.012984
+Epoch  37/50 | Flow loss: 0.012802
+Epoch  38/50 | Flow loss: 0.012980
+Epoch  39/50 | Flow loss: 0.012881
+Epoch  40/50 | Flow loss: 0.013203
+Epoch  41/50 | Flow loss: 0.013110
+Epoch  42/50 | Flow loss: 0.013176
+Epoch  43/50 | Flow loss: 0.012941
+Epoch  44/50 | Flow loss: 0.012774
+Epoch  45/50 | Flow loss: 0.012900
+Epoch  46/50 | Flow loss: 0.013127
+Epoch  47/50 | Flow loss: 0.012755
+Epoch  48/50 | Flow loss: 0.013203
+Epoch  49/50 | Flow loss: 0.012873
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+wandb: uploading artifact run-emsceype-sentinelspositions_ep50-RL6DKw; uploading artifact run-emsceype-sentinelsfinal_positions-9SH7fQ; updating run metadata
+wandb: uploading artifact run-emsceype-sentinelspositions_ep50-RL6DKw; uploading artifact run-emsceype-sentinelsfinal_positions-9SH7fQ
+wandb: uploading artifact run-emsceype-sentinelspositions_ep50-RL6DKw; uploading artifact run-emsceype-sentinelsfinal_positions-9SH7fQ; uploading history steps 123221-123300, summary, console lines 52-74
+wandb: uploading artifact run-emsceype-sentinelspositions_ep50-RL6DKw
+wandb: uploading artifact run-emsceype-sentinelspositions_ep50-RL6DKw; uploading output.log; uploading wandb-summary.json; uploading config.yaml; uploading media/table/sentinels/positions_ep50_123300_ad4bfdaea7283a620b6b.table.json (+ 2 more)
+wandb: uploading data
+wandb: 
+wandb: Run history:
+wandb:          epoch ▁▁▁▂▂▂▂▂▂▃▃▃▃▃▃▄▄▄▄▄▅▅▅▅▅▅▆▆▆▆▆▆▇▇▇▇▇███
+wandb: opt/epoch_loss ▃▄▃▄▄▅▆▆▇▇▃▇▄▅▄▄▆▆▃▁▆▇▇▅▃▄█▄▄▂▃▇▆▇▄▃▆▁▇█
+wandb:  opt/grad_norm ▂▄▂▂▂▃▂▂▂▁▃▄▂▂▁▂▂█▃▂▁▃▃▁▂▁▅▃▂▂▃▄▂▅▅▄▃▁▁▄
+wandb:  opt/step_loss ▄▃▂▁▃▅▆▇▂▁█▃▄▂▄▃▃▃▃▂▃▄▄▄▄▂▄▅▇▅▇▅▂▆▃▃▂▄▃▃
+wandb: 
+wandb: Run summary:
+wandb:          epoch 50
+wandb: final_opt_loss 0.01322
+wandb:  num_sentinels 15
+wandb: opt/epoch_loss 0.01322
+wandb:  opt/grad_norm 0.00832
+wandb:  opt/step_loss 0.00822
+wandb:    result_path ./results/sentinel_p...
+wandb: 
+wandb: 🚀 View run sentinelpv-stage2 at: https://wandb.ai/stivengjinaj-politecnico-di-torino/physense-irradiance/runs/emsceype
+wandb: ⭐️ View project at: https://wandb.ai/stivengjinaj-politecnico-di-torino/physense-irradiance
+wandb: Synced 5 W&B file(s), 7 media file(s), 14 artifact file(s) and 1 other file(s)
+wandb: Find logs at: ./wandb/run-20260416_090227-emsceype/logs
+Epoch  50/50 | Flow loss: 0.013219
+
+=======================================================
+  Optimisation complete — 15 sentinel panels found
+=======================================================
+  Sentinel  1: panel #1080  lat=46.02485  lon=8.75166
+  Sentinel  2: panel #1080  lat=46.02485  lon=8.75166
+  Sentinel  3: panel #1080  lat=46.02485  lon=8.75166
+  Sentinel  4: panel #1079  lat=46.02468  lon=8.68706
+  Sentinel  5: panel #254  lat=44.58471  lon=9.19877
+  Sentinel  6: panel #1079  lat=46.02468  lon=8.68706
+  Sentinel  7: panel #254  lat=44.58471  lon=9.19877
+  Sentinel  8: panel #1080  lat=46.02485  lon=8.75166
+  Sentinel  9: panel #1080  lat=46.02485  lon=8.75166
+  Sentinel 10: panel #251  lat=44.58487  lon=8.94683
+  Sentinel 11: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 12: panel #1080  lat=46.02485  lon=8.75166
+  Sentinel 13: panel #254  lat=44.58471  lon=9.19877
+  Sentinel 14: panel #251  lat=44.58487  lon=8.94683
+  Sentinel 15: panel #183  lat=44.49460  lon=8.75825
+
+  Saved to: ./results/sentinel_panels.npy

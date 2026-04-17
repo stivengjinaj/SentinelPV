@@ -9,3 +9,4 @@ wandb/*
 sentinel_env/
 checkpoints/
 output.log
+reconstruction_results_*.csv

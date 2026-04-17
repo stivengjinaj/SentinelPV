@@ -1,0 +1,29 @@
+nohup: ignoring input
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from /home/sgjinaj/.netrc.
+wandb: Currently logged in as: stivengjinaj (stivengjinaj-politecnico-di-torino) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: setting up run amf1tsg7
+wandb: Tracking run with wandb version 0.25.1
+wandb: Run data is saved locally in /home/sgjinaj/SentinelPV_Physense/wandb/run-20260417_083655-amf1tsg7
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run sentinelpv-stage2
+wandb: ⭐️ View project at https://wandb.ai/stivengjinaj-politecnico-di-torino/physense-irradiance
+wandb: 🚀 View run at https://wandb.ai/stivengjinaj-politecnico-di-torino/physense-irradiance/runs/amf1tsg7
+Device: cuda
+Dataset: 157776 timesteps | 1149 panels
+Stage 1 checkpoint loaded: ./training_history/train_pvgis2005_2022_100sentinels/irradiance_stage1_final.pth
+
+Starting Stage 2: optimising 100 sentinel positions...
+
+Epoch   1/50 | Flow loss: 0.011980
+Epoch   2/50 | Flow loss: 0.012516
+Epoch   3/50 | Flow loss: 0.012274
+Epoch   4/50 | Flow loss: 0.011803
+Epoch   5/50 | Flow loss: 0.012149
+Epoch   6/50 | Flow loss: 0.012030
+Epoch   7/50 | Flow loss: 0.012416
+Epoch   8/50 | Flow loss: 0.012233
+Epoch   9/50 | Flow loss: 0.012285
+Epoch  10/50 | Flow loss: 0.012049
+Epoch  11/50 | Flow loss: 0.012485
+Epoch  12/50 | Flow loss: 0.012349
+Epoch  13/50 | Flow loss: 0.012664

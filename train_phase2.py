@@ -10,14 +10,14 @@ from torch.utils.data import DataLoader
 from datasets.IrradianceDataset import IrradianceDataset
 from models.transolver_pv import IrradianceModel
 
-NUM_SENTINELS = 15
+NUM_SENTINELS = 100
 EPOCHS        = 50
 LR            = 0.25
 BATCH_SIZE    = 64
-STAGE1_CKPT   = "./checkpoints/irradiance_stage1_final.pth"
+STAGE1_CKPT   = "./training_history/train_pvgis2005_2022_100sentinels/irradiance_stage1_final.pth"
 IRRAD_PATH    = "datasets/irradiance_train.npy"
 COORDS_PATH   = "datasets/coords.npy"
-RESULTS_DIR   = "./results"
+RESULTS_DIR   = "./training_history/train_pvgis2005_2022_100sentinels"
 
 WANDB_PROJECT  = "physense-irradiance"
 WANDB_ENTITY   = "stivengjinaj-politecnico-di-torino"

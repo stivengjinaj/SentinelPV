@@ -8,5 +8,5 @@ Sentinel-Piemonte/sentinel_env
 wandb/*
 sentinel_env/
 checkpoints/
-output.log
+output_p*.log
 reconstruction_results_*.csv

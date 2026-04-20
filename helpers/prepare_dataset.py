@@ -282,14 +282,14 @@ def main():
     print(f"\n[3/3] Saving to {args.out}/")
 
     irr_path    = os.path.join(args.out, "irradiance_train.npy")
-    sun_path    = os.path.join(args.out, "sun_height.npy")
+    sun_path    = os.path.join(args.out, "sun_height_val.npy")
     coords_path = os.path.join(args.out, "coords.npy")
     ids_path    = os.path.join(args.out, "panel_ids.npy")
 
-    np.save(irr_path, irr)
+    # np.save(irr_path, irr)
     np.save(sun_path, sun)
-    np.save(coords_path, coords)
-    np.save(ids_path, panel_ids)
+    # np.save(coords_path, coords)
+    # np.save(ids_path, panel_ids)
 
     print(f"      irradiance_train.npy  shape={irr.shape}   dtype=float32")
     print(f"      sun_height.npy  shape={sun.shape}   dtype=float32")

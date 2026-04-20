@@ -10,14 +10,15 @@ from torch.utils.data import DataLoader
 from datasets.IrradianceDataset import IrradianceDataset
 from models.transolver_pv import IrradianceModel
 
-NUM_SENTINELS = 100
+NUM_SENTINELS = 30
 EPOCHS        = 50
 LR            = 0.25
 BATCH_SIZE    = 64
-STAGE1_CKPT   = "./training_history/train_pvgis2005_2022_100sentinels/irradiance_stage1_final.pth"
+STAGE1_CKPT   = "./training_history/train_pvgis2005_2022_30sentinels_sun/irradiance_stage1_final.pth"
 IRRAD_PATH    = "datasets/irradiance_train.npy"
+SUN_HEIGHT_PATH = "datasets/sun_height.npy"
 COORDS_PATH   = "datasets/coords.npy"
-RESULTS_DIR   = "./training_history/train_pvgis2005_2022_100sentinels"
+RESULTS_DIR   = "./training_history/train_pvgis2005_2022_30sentinels_sun"
 
 WANDB_PROJECT  = "physense-irradiance"
 WANDB_ENTITY   = "stivengjinaj-politecnico-di-torino"
@@ -119,7 +120,7 @@ def optimise():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
 
-    dataset = IrradianceDataset(IRRAD_PATH, COORDS_PATH)
+    dataset = IrradianceDataset(IRRAD_PATH, SUN_HEIGHT_PATH, COORDS_PATH)
     loader  = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True,
                          num_workers=4, pin_memory=True)
     N  = dataset.pos_tensor.shape[0]

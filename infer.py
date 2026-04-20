@@ -105,46 +105,17 @@ class IrradianceReconstructor:
 
 
     def predict(self, sentinel_readings: dict, timestep: int) -> dict:
-        """
-        Reconstruct irradiance for all N panels from sentinel readings.
-
-        Parameters
-        ----------
-        sentinel_readings : dict  panel_id (str) -> irradiance (float, W/m²)
-                            Must contain every sentinel panel ID.
-        timestep          : int   index into the sun-height array (0-based).
-                            Used to look up the current sun elevation for
-                            all panels.
-
-        Returns
-        -------
-        dict:
-            'panel_ids'           : (N,) str
-            'irradiance'          : (N,) float  W/m²
-            'sentinel_ids'        : (S,) str
-            'sentinel_irradiance' : (S,) float  W/m²  (the values you passed in)
-        """
         sentinel_ids = self.panel_ids[self.sentinel_indices]
-
-        # Sentinel irradiance in fixed panel order
         s_irrad_raw  = np.array(
-            [sentinel_readings[pid] for pid in sentinel_ids],
-            dtype=np.float32,
-        )                                                             # (S,)
+            [sentinel_readings[pid] for pid in sentinel_ids], dtype=np.float32
+        )
 
-        hsun_full_raw = self._all_hsun_raw[timestep]                 # (N,)
+        hsun_full_raw  = self._all_hsun_raw[timestep]                # (N,)
+        s_irrad_norm   = self._normalise_irrad(s_irrad_raw)
+        hsun_full_norm = self._normalise_sun(hsun_full_raw)
 
-        # Normalise
-        s_irrad_norm  = self._normalise_irrad(s_irrad_raw)           # (S,)
-        hsun_full_norm = self._normalise_sun(hsun_full_raw)           # (N,)
-
-        s_hsun_norm   = hsun_full_norm[self.sentinel_indices]        # (S,)
-
-        irrad_norm = self._reconstruct(
-            s_irrad_norm, s_hsun_norm, hsun_full_norm
-        )                                                             # (N,)
-
-        irrad_wm2 = self._denormalise_irrad(irrad_norm)              # (N,)
+        irrad_norm = self._reconstruct(s_irrad_norm, hsun_full_norm)
+        irrad_wm2  = self._denormalise_irrad(irrad_norm)
 
         return {
             "panel_ids":           self.panel_ids,
@@ -184,61 +155,52 @@ class IrradianceReconstructor:
     @torch.no_grad()
     def _reconstruct(
         self,
-        s_irrad_norm:  np.ndarray,   # (S,)  sentinel irradiance, normalised
-        s_hsun_norm:   np.ndarray,   # (S,)  sentinel sun heights, normalised
-        hsun_full_norm: np.ndarray,  # (N,)  all-panel sun heights, normalised
-    ) -> np.ndarray:                 # (N,)  irradiance, normalised
-        """
-        Two distinct roles for sun height:
-          - hsun_full_norm → appended to every field token inside the ODE loop
-          - s_hsun_norm    → part of the sensor feature fed to cross-attention
-        """
-        pos    = self.all_pos                                         # (N, 2)
+        s_irrad_norm:   np.ndarray,   # (S,)
+        hsun_full_norm: np.ndarray,   # (N,)
+    ) -> np.ndarray:
+
+        pos    = self.all_pos
         pos_bc = pos.unsqueeze(0)                                     # (1, N, 2)
         ref_d  = self.model._ref_grid_distances(pos_bc)               # (1, N, 16)
 
-        # FIX 5: convert full-field sun heights to a (1, N, 1) tensor on device
-        h_sun_tensor = torch.tensor(
-            hsun_full_norm, dtype=torch.float32, device=self.device
-        ).unsqueeze(0).unsqueeze(-1)                                  # (1, N, 1)
+        # Global sun height conditioning — single scalar mean over all panels
+        h_sun_mean = torch.tensor(
+            [[hsun_full_norm.mean()]],
+            dtype=torch.float32, device=self.device,
+        )                                                             # (1, 1)
+        h_sun_emb = self.model.sun_embedder(h_sun_mean)              # (1, cond_dim)
 
-        # Sentinel sensor features
+        # Sensor features: irradiance only
         s_idx = torch.tensor(self.sentinel_indices, device=self.device)
         s_pos = pos[s_idx].unsqueeze(0)                               # (1, S, 2)
         s_y   = torch.tensor(
             s_irrad_norm, dtype=torch.float32, device=self.device
         ).unsqueeze(0).unsqueeze(-1)                                  # (1, S, 1)
-        s_h   = torch.tensor(
-            s_hsun_norm, dtype=torch.float32, device=self.device
-        ).unsqueeze(0).unsqueeze(-1)                                  # (1, S, 1)
 
-        # Encode sensor context once — does not change across ODE steps
-        sensor_feat = torch.cat([s_pos, s_y, s_h], dim=-1)           # (1, S, 4)
-        s  = self.model.sensor_encoder(sensor_feat)                   # (1, S, H)
-        s2 = self.model.sensor_encoder_2(sensor_feat)                 # (1, S, H/4)
+        sensor_feat = torch.cat([s_pos, s_y], dim=-1)                 # (1, S, 3)
+        s  = self.model.sensor_encoder(sensor_feat)
+        s2 = self.model.sensor_encoder_2(sensor_feat)
 
         pred_acc = torch.zeros(len(pos), 1, device=self.device)
 
         for _ in range(self.n_samples):
-            z  = torch.randn(1, len(pos), 1, device=self.device)      # (1, N, 1)
+            z  = torch.randn(1, len(pos), 1, device=self.device)
             dt = 1.0 / self.n_steps
 
             for i in range(self.n_steps):
                 t_val = torch.tensor(
-                    [i / self.n_steps],
-                    dtype=torch.float32, device=self.device,
+                    [i / self.n_steps], dtype=torch.float32, device=self.device
                 )
-                # h_sun_tensor provides static physical context at each ODE step
-                x     = torch.cat([pos_bc, z, h_sun_tensor, ref_d], dim=-1)  # (1, N, 20)
+                x     = torch.cat([pos_bc, z, ref_d], dim=-1)        # (1, N, 19)
                 fx    = self.model.preprocess(x) + self.model.placeholder[None, None, :]
-                t_emb = self.model.t_embedder(t_val) + s2.mean(dim=1)
+                t_emb = self.model.t_embedder(t_val) + s2.mean(dim=1) + h_sun_emb
                 x_out = self.model.transformer(fx, t_emb, s)
-                vel   = self.model.mlp_head(x_out, t_emb)             # (1, N, 1)
+                vel   = self.model.mlp_head(x_out, t_emb)
                 z     = z + vel * dt
 
-            pred_acc += z.squeeze(0)                                  # (N, 1)
+            pred_acc += z.squeeze(0)
 
-        pred = (pred_acc / self.n_samples).squeeze(-1)                # (N,)
+        pred = (pred_acc / self.n_samples).squeeze(-1)
         return pred.clamp(min=0.0).cpu().numpy()
 
 

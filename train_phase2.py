@@ -76,31 +76,34 @@ def flow_loss_for_sentinels(
     h_sun = batch['h_sun'].to(device)  # (B, N, 1)
     B, N, _ = y.shape
 
-    # Flow interpolation on irradiance only
+    # Flow interpolation — irradiance only
     u       = torch.randn(B, device=device)
     t       = torch.sigmoid(u)
     t_bc    = t.view(B, 1, 1)
     noise   = torch.randn_like(y)
     y_t     = t_bc * y + (1. - t_bc) * noise
-    target  = y - noise                               # (B, N, 1)
+    target  = y - noise                                          # (B, N, 1)
 
     ref_d = model._ref_grid_distances(pos)
-    x     = torch.cat([pos, y_t, h_sun, ref_d], dim=-1)   # (B, N, 20)
+    x     = torch.cat([pos, y_t, ref_d], dim=-1)                # (B, N, 19)
     fx    = model.preprocess(x) + model.placeholder[None, None, :]
 
-    s_pos_batch = sentinel_pos.unsqueeze(0).expand(B, -1, -1)
-    s_y  = sample_idw(s_pos_batch, pos, y)             # (B, S, 1)
-    s_h  = sample_idw(s_pos_batch, pos, h_sun)         # (B, S, 1)
-
-    sensor_feat = torch.cat([s_pos_batch, s_y, s_h], dim=-1)  # (B, S, 4)
+    # Sentinel sensor features — irradiance only
+    s_pos_batch = sentinel_pos.unsqueeze(0).expand(B, -1, -1)   # (B, S, 2)
+    s_y         = sample_idw(s_pos_batch, pos, y)               # (B, S, 1)
+    sensor_feat = torch.cat([s_pos_batch, s_y], dim=-1)         # (B, S, 3)
     s    = model.sensor_encoder(sensor_feat)
     s2   = model.sensor_encoder_2(sensor_feat)
 
-    t_emb = model.t_embedder(t) + s2.mean(dim=1)
-    x_out = model.transformer(fx, t_emb, s)
-    pred  = model.mlp_head(x_out, t_emb) # (B, N, 1)
+    # Global sun height conditioning
+    h_sun_mean = h_sun.mean(dim=1)                              # (B, 1)
+    h_sun_emb  = model.sun_embedder(h_sun_mean)                 # (B, cond_dim)
 
-    return nn.functional.mse_loss(pred, target)   # irradiance loss only
+    t_emb = model.t_embedder(t) + s2.mean(dim=1) + h_sun_emb
+    x_out = model.transformer(fx, t_emb, s)
+    pred  = model.mlp_head(x_out, t_emb)                        # (B, N, 1)
+
+    return nn.functional.mse_loss(pred, target)
 
 
 # Projection: snap each sentinel to the nearest real panel

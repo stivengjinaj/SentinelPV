@@ -188,7 +188,7 @@ class IrradianceModel(nn.Module):
     def __init__(
         self,
         space_dim:  int = 2,
-        fun_dim:    int = 1,   # irradiance
+        fun_dim:    int = 1,
         out_dim:    int = 1,
         n_layers:   int = 12,
         n_hidden:   int = 374,
@@ -199,14 +199,14 @@ class IrradianceModel(nn.Module):
     ):
         super().__init__()
         self.__name__ = 'IrradiancePhySense'
-
         self.ref       = ref
         self.space_dim = space_dim
         self.fun_dim   = fun_dim
         self.n_hidden  = n_hidden
         cond_dim       = n_hidden // 4
 
-        in_dim = space_dim + fun_dim + 1 + ref * ref   # 2 + 1 + 1 + 16 = 20
+        in_dim     = space_dim + fun_dim + ref * ref       # 2 + 1 + 16 = 19
+        sensor_in  = space_dim + fun_dim                   # 2 + 1 = 3
 
         self.preprocess = nn.Sequential(
             nn.LayerNorm(in_dim),
@@ -214,12 +214,18 @@ class IrradianceModel(nn.Module):
             nn.LayerNorm(n_hidden),
         )
 
-        # Sensor encoder: (lat, lon, irradiance) -> hidden
-        sensor_in = space_dim + fun_dim + 1            # 2 + 1 + 1 = 4
         self.sensor_encoder   = nn.Sequential(nn.Linear(sensor_in, n_hidden),  nn.LayerNorm(n_hidden))
         self.sensor_encoder_2 = nn.Sequential(nn.Linear(sensor_in, cond_dim),  nn.LayerNorm(cond_dim))
 
-        self.t_embedder  = TimestepEmbedder(cond_dim, frequency_embedding_size=cond_dim)
+        self.t_embedder = TimestepEmbedder(cond_dim, frequency_embedding_size=cond_dim)
+
+        # small MLP to embed scalar mean sun height into cond_dim
+        self.sun_embedder = nn.Sequential(
+            nn.Linear(1, cond_dim),
+            nn.SiLU(),
+            nn.Linear(cond_dim, cond_dim),
+        )
+
         self.transformer = Transformer(n_hidden, n_layers, n_head, n_head, n_hidden, slice_num, dropout)
         self.mlp_head    = FinalLayer(n_hidden, out_channels=out_dim)
         self.placeholder = nn.Parameter((1 / n_hidden) * torch.rand(n_hidden))
@@ -240,55 +246,46 @@ class IrradianceModel(nn.Module):
 
 
     def forward(self, batch: dict) -> torch.Tensor:
-        """
-        Flow-matching training step.
-
-        batch keys:
-            pos : (B, N, 2)   panel coordinates (normalised)
-            y   : (B, N, 1)   irradiance (normalised)
-
-        Returns:
-            scalar MSE loss
-        """
-        pos = batch['pos']   # (B, N, 2)
-        y   = batch['y']     # (B, N, 1)
+        pos   = batch['pos']    # (B, N, 2)
+        y     = batch['y']      # (B, N, 1)
         h_sun = batch['h_sun']  # (B, N, 1)
 
         B, N, _ = y.shape
         device  = y.device
 
-        # Sample random t
-        u = torch.randn(B, device=device)
-        t = torch.sigmoid(u)                 # (B,)
-        t_bc = t.view(B, 1, 1)              # broadcast over (N, 1)
+        # Flow interpolation on irradiance only
+        u      = torch.randn(B, device=device)
+        t      = torch.sigmoid(u)
+        t_bc   = t.view(B, 1, 1)
+        noise  = torch.randn_like(y)
+        y_t    = t_bc * y + (1. - t_bc) * noise
+        target = y - noise                                  # (B, N, 1)
 
-        # Interpolation
-        noise = torch.randn_like(y)
-        y_t   = t_bc * y + (1. - t_bc) * noise
-        target = y - noise                   # velocity target
-
-        # Build field tokens
         if pos.dim() == 2:
             pos = pos.unsqueeze(0).expand(B, -1, -1)
 
-        ref_dists = self._ref_grid_distances(pos)          # (B, N, ref^2)
-        x = torch.cat([pos, y_t, h_sun, ref_dists], dim=-1)       # (B, N, 20)
+        ref_dists = self._ref_grid_distances(pos)           # (B, N, 16)
+
+        # Field tokens: 19 dims, no h_sun here
+        x  = torch.cat([pos, y_t, ref_dists], dim=-1)      # (B, N, 19)
         fx = self.preprocess(x) + self.placeholder[None, None, :]
 
-        # Random sensor subset (10–200)
-        n_sensors = random.randint(10, min(200, N))
-        idx       = torch.randperm(N, device=device)[:n_sensors]
-        s_pos     = pos[:, idx, :]    # (B, n_sensors, 2)
-        s_y       = y[:, idx, :]     # (B, n_sensors, 1) ground-truth irradiance at sensors
-        s_h         = h_sun[:, idx, :]   # (B, S, 1)
+        # Sensor features: 3 dims, no h_sun here
+        n_sensors   = random.randint(10, min(200, N))
+        idx         = torch.randperm(N, device=device)[:n_sensors]
+        s_pos       = pos[:, idx, :]
+        s_y         = y[:, idx, :]
+        sensor_feat = torch.cat([s_pos, s_y], dim=-1)      # (B, S, 3)
+        s    = self.sensor_encoder(sensor_feat)
+        s2   = self.sensor_encoder_2(sensor_feat)
 
-        sensor_feat = torch.cat([s_pos, s_h, s_y], dim=-1)      # (B, n_sensors, 4)
-        s    = self.sensor_encoder(sensor_feat)             # (B, n_sensors, n_hidden)
-        s2   = self.sensor_encoder_2(sensor_feat)           # (B, n_sensors, cond_dim)
+        # Sun height as global conditioning signal
+        # Mean over panels: nearly constant across N but varies across timesteps
+        h_sun_mean = h_sun.mean(dim=1)                     # (B, 1)
+        h_sun_emb  = self.sun_embedder(h_sun_mean)         # (B, cond_dim)
 
-        t_emb = self.t_embedder(t) + s2.mean(dim=1)        # (B, cond_dim)
+        t_emb = self.t_embedder(t) + s2.mean(dim=1) + h_sun_emb   # (B, cond_dim)
 
-        # Transformer + output
         x_out = self.transformer(fx, t_emb, s)
         pred  = self.mlp_head(x_out, t_emb)                # (B, N, 1)
 
@@ -298,50 +295,51 @@ class IrradianceModel(nn.Module):
     @torch.no_grad()
     def sample(
         self,
-        pos:           torch.Tensor,    # (N, 2)
-        y_full:        torch.Tensor,    # (N, 1)  — ground truth (for error computation)
-        h_sun_full:     torch.Tensor,    # (N, 1)  sun height — context only
-        sensor_indices: torch.Tensor,   # (S,)    — which panels are sensors
-        n_steps:       int = 5,
-        n_samples:     int = 1,
+        pos:            torch.Tensor,    # (N, 2)
+        y_full:         torch.Tensor,    # (N, 1)
+        h_sun_full:     torch.Tensor,    # (N, 1)
+        sensor_indices: torch.Tensor,    # (S,)
+        n_steps:        int = 5,
+        n_samples:      int = 1,
     ):
-        """
-        ODE integration to reconstruct the full irradiance field from sparse sensors.
-
-        Returns:
-            pred          : (N, 1) reconstructed field
-            relative_loss : scalar relative-L2 error
-        """
         device = pos.device
-        pos_bc = pos.unsqueeze(0)           # (1, N, 2)
-        h_sun_bc  = h_sun_full.unsqueeze(0)
-        ref_d  = self._ref_grid_distances(pos_bc)
+        pos_bc = pos.unsqueeze(0)                                    # (1, N, 2)
+        ref_d  = self._ref_grid_distances(pos_bc)                    # (1, N, 16)
 
-        s_pos  = pos[sensor_indices].unsqueeze(0)    # (1, S, 2)
-        s_y    = y_full[sensor_indices].unsqueeze(0) # (1, S, 1)
-        s_h   = h_sun_full[sensor_indices].unsqueeze(0) # (1, S, 1)
-
-        sensor_feat = torch.cat([s_pos, s_y, s_h], dim=-1)
+        # Sensor features: irradiance only
+        s_pos = pos[sensor_indices].unsqueeze(0)                     # (1, S, 2)
+        s_y   = y_full[sensor_indices].unsqueeze(0)                  # (1, S, 1)
+        sensor_feat = torch.cat([s_pos, s_y], dim=-1)                # (1, S, 3)
         s    = self.sensor_encoder(sensor_feat)
         s2   = self.sensor_encoder_2(sensor_feat)
 
-        pred_acc = torch.zeros_like(y_full)
+        # Global sun height conditioning — computed once, reused every ODE step
+        h_sun_mean = h_sun_full.mean(dim=0, keepdim=True)            # (1, 1)
+        h_sun_emb  = self.sun_embedder(h_sun_mean.unsqueeze(0))      # (1, cond_dim)
+
+        pred_acc = torch.zeros(len(pos), 1, device=device)
 
         for _ in range(n_samples):
-            z  = torch.randn_like(y_full.unsqueeze(0))   # (1, N, 1)
+            z  = torch.randn(1, len(pos), 1, device=device)
             dt = 1.0 / n_steps
 
             for i in range(n_steps):
-                t_val = torch.tensor([i / n_steps], device=device)
-                x     = torch.cat([pos_bc, z, h_sun_bc, ref_d], dim=-1)
+                t_val = torch.tensor([i / n_steps], device=device, dtype=torch.float32)
+                x     = torch.cat([pos_bc, z, ref_d], dim=-1)        # (1, N, 19)
                 fx    = self.preprocess(x) + self.placeholder[None, None, :]
-                t_emb = self.t_embedder(t_val) + s2.mean(dim=1)
+                t_emb = self.t_embedder(t_val) + s2.mean(dim=1) + h_sun_emb.squeeze(0)
                 x_out = self.transformer(fx, t_emb, s)
-                vel   = self.mlp_head(x_out, t_emb)      # (1, N, 1)
+                vel   = self.mlp_head(x_out, t_emb)
                 z     = z + vel * dt
 
-            pred_acc = pred_acc + z.squeeze(0)
+            pred_acc += z.squeeze(0)
 
-        pred = pred_acc / n_samples
-        rel_loss = (torch.norm(y_full - pred) / (torch.norm(y_full) + 1e-8)).item()
+        pred = (pred_acc / n_samples).squeeze(-1)
+        pred = pred.clamp(min=0.0)
+
+        rel_loss = (
+            torch.norm(y_full.squeeze(-1) - pred) /
+            (torch.norm(y_full) + 1e-8)
+        ).item()
+
         return pred, rel_loss

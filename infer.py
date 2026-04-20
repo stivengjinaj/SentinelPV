@@ -24,14 +24,14 @@ import torch.nn as nn
 
 from models.transolver_pv import IrradianceModel
 
-STAGE1_CKPT    = "training_history/train_pvgis2005_2022_30sentinels_sun/irradiance_stage1_final.pth"
-SENTINEL_PATH  = "training_history/train_pvgis2005_2022_30sentinels_sun/sentinel_panels.npy"
-COORDS_PATH    = "training_history/train_pvgis2005_2022_30sentinels_sun/dataset/coords.npy"
-SUN_PATH       = "training_history/train_pvgis2005_2022_30sentinels_sun/dataset/sun_height_val.npy"
-PANEL_IDS_PATH = "training_history/train_pvgis2005_2022_30sentinels_sun/dataset/panel_ids.npy"
+STAGE1_CKPT    = "training_history/train_pvgis2005_30sentinels_global_sun/irradiance_stage1_final.pth"
+SENTINEL_PATH  = "training_history/train_pvgis2005_30sentinels_global_sun/sentinel_panels.npy"
+COORDS_PATH    = "training_history/train_pvgis2005_30sentinels_global_sun/dataset/coords.npy"
+SUN_PATH       = "training_history/train_pvgis2005_30sentinels_global_sun/dataset/sun_height_val.npy"
+PANEL_IDS_PATH = "training_history/train_pvgis2005_30sentinels_global_sun/dataset/panel_ids.npy"
 
 IRRAD_MIN = 0.0
-IRRAD_MAX = 1108.010010
+IRRAD_MAX = 1094.010010
 SUN_MIN   = 0.0
 SUN_MAX   = 68.989998
 
@@ -114,6 +114,7 @@ class IrradianceReconstructor:
         s_irrad_norm   = self._normalise_irrad(s_irrad_raw)
         hsun_full_norm = self._normalise_sun(hsun_full_raw)
 
+        # No longer need to pass sentinel sun heights separately
         irrad_norm = self._reconstruct(s_irrad_norm, hsun_full_norm)
         irrad_wm2  = self._denormalise_irrad(irrad_norm)
 
@@ -156,7 +157,7 @@ class IrradianceReconstructor:
     def _reconstruct(
         self,
         s_irrad_norm:   np.ndarray,   # (S,)
-        hsun_full_norm: np.ndarray,   # (N,)
+        hsun_full_norm: np.ndarray,   # (N,)  used only for global mean
     ) -> np.ndarray:
 
         pos    = self.all_pos

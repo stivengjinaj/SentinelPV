@@ -13,14 +13,14 @@ from models.transolver_pv import IrradianceModel
 EPOCHS      = 300
 BATCH_SIZE  = 128
 LR          = 1e-4
-SAVE_DIR    = "./training_history/train_pvgis2005_2022_30sentinels_sun"
+SAVE_DIR    = "./training_history/train_pvgis2005_2022_30sentinels_global_sun"
 IRRAD_PATH  = "datasets/irradiance_train.npy"
 SUN_HEIGHT_PATH = "datasets/sun_height.npy"
 COORDS_PATH = "datasets/coords.npy"
 
 WANDB_PROJECT  = "physense-irradiance"
 WANDB_ENTITY   = "stivengjinaj-politecnico-di-torino"
-WANDB_RUN_NAME = "train_pvgis2005_2022_30sentinels_sun-stage1"
+WANDB_RUN_NAME = "train_pvgis2005_2022_30sentinels_global_sun-stage1"
 
 TELEGRAM_TOKEN = "8647539434:AAGQ4Ik9OVVEd0Z0QhlDBHpAyTjnrIUmTms"
 TELEGRAM_CHAT_ID = "6694449067"

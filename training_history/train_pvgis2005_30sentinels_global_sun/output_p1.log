@@ -1,0 +1,363 @@
+nohup: ignoring input
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from /home/sgjinaj/.netrc.
+wandb: Currently logged in as: stivengjinaj (stivengjinaj-politecnico-di-torino) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: setting up run okntatep
+wandb: Tracking run with wandb version 0.25.1
+wandb: Run data is saved locally in /home/sgjinaj/SentinelPV_Physense/wandb/run-20260420_093430-okntatep
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run train_pvgis2005_2022_30sentinels_global_sun-stage1
+wandb: ⭐️ View project at https://wandb.ai/stivengjinaj-politecnico-di-torino/physense-irradiance
+wandb: 🚀 View run at https://wandb.ai/stivengjinaj-politecnico-di-torino/physense-irradiance/runs/okntatep
+Device: cuda
+Dataset: 8760 timesteps | 1149 panels
+Trainable parameters: 13,531,687
+Starting Stage 1 training...
+Epoch    1/300 | Loss: 1.06884 | LR: 1.09e-05 | Skipped: 0 | Time: 28.4s
+Epoch    2/300 | Loss: 0.99779 | LR: 2.08e-05 | Skipped: 0 | Time: 28.4s
+Epoch    3/300 | Loss: 0.43306 | LR: 3.07e-05 | Skipped: 0 | Time: 28.4s
+Epoch    4/300 | Loss: 0.13353 | LR: 4.06e-05 | Skipped: 0 | Time: 28.3s
+Epoch    5/300 | Loss: 0.06571 | LR: 5.05e-05 | Skipped: 0 | Time: 28.4s
+Epoch    6/300 | Loss: 0.04567 | LR: 6.04e-05 | Skipped: 0 | Time: 28.4s
+Epoch    7/300 | Loss: 0.04254 | LR: 7.03e-05 | Skipped: 0 | Time: 28.3s
+Epoch    8/300 | Loss: 0.04904 | LR: 8.02e-05 | Skipped: 0 | Time: 28.5s
+Epoch    9/300 | Loss: 0.03926 | LR: 9.01e-05 | Skipped: 0 | Time: 28.4s
+Epoch   10/300 | Loss: 0.03411 | LR: 1.00e-04 | Skipped: 0 | Time: 28.4s
+Epoch   11/300 | Loss: 0.03258 | LR: 1.00e-04 | Skipped: 0 | Time: 28.5s
+Epoch   12/300 | Loss: 0.03156 | LR: 1.00e-04 | Skipped: 0 | Time: 28.4s
+Epoch   13/300 | Loss: 0.03175 | LR: 1.00e-04 | Skipped: 0 | Time: 28.3s
+Epoch   14/300 | Loss: 0.02962 | LR: 1.00e-04 | Skipped: 0 | Time: 28.4s
+Epoch   15/300 | Loss: 0.03064 | LR: 9.99e-05 | Skipped: 0 | Time: 28.4s
+Epoch   16/300 | Loss: 0.03040 | LR: 9.99e-05 | Skipped: 0 | Time: 28.4s
+Epoch   17/300 | Loss: 0.03179 | LR: 9.99e-05 | Skipped: 0 | Time: 28.4s
+Epoch   18/300 | Loss: 0.03022 | LR: 9.98e-05 | Skipped: 0 | Time: 28.5s
+Epoch   19/300 | Loss: 0.02882 | LR: 9.98e-05 | Skipped: 0 | Time: 28.5s
+Epoch   20/300 | Loss: 0.02953 | LR: 9.97e-05 | Skipped: 0 | Time: 28.3s
+Epoch   21/300 | Loss: 0.02690 | LR: 9.96e-05 | Skipped: 0 | Time: 28.5s
+Epoch   22/300 | Loss: 0.02641 | LR: 9.96e-05 | Skipped: 0 | Time: 28.4s
+Epoch   23/300 | Loss: 0.02648 | LR: 9.95e-05 | Skipped: 0 | Time: 28.4s
+Epoch   24/300 | Loss: 0.02682 | LR: 9.94e-05 | Skipped: 0 | Time: 28.5s
+Epoch   25/300 | Loss: 0.02583 | LR: 9.93e-05 | Skipped: 0 | Time: 28.5s
+Epoch   26/300 | Loss: 0.02453 | LR: 9.93e-05 | Skipped: 0 | Time: 28.3s
+Epoch   27/300 | Loss: 0.02479 | LR: 9.92e-05 | Skipped: 0 | Time: 28.4s
+Epoch   28/300 | Loss: 0.02604 | LR: 9.91e-05 | Skipped: 0 | Time: 28.4s
+Epoch   29/300 | Loss: 0.02626 | LR: 9.90e-05 | Skipped: 0 | Time: 28.4s
+Epoch   30/300 | Loss: 0.02391 | LR: 9.88e-05 | Skipped: 0 | Time: 28.3s
+Epoch   31/300 | Loss: 0.02223 | LR: 9.87e-05 | Skipped: 0 | Time: 28.5s
+Epoch   32/300 | Loss: 0.02293 | LR: 9.86e-05 | Skipped: 0 | Time: 28.4s
+Epoch   33/300 | Loss: 0.02252 | LR: 9.85e-05 | Skipped: 0 | Time: 28.4s
+Epoch   34/300 | Loss: 0.02245 | LR: 9.83e-05 | Skipped: 0 | Time: 28.4s
+Epoch   35/300 | Loss: 0.02368 | LR: 9.82e-05 | Skipped: 0 | Time: 28.5s
+Epoch   36/300 | Loss: 0.02244 | LR: 9.80e-05 | Skipped: 0 | Time: 28.4s
+Epoch   37/300 | Loss: 0.02308 | LR: 9.79e-05 | Skipped: 0 | Time: 28.5s
+Epoch   38/300 | Loss: 0.02171 | LR: 9.77e-05 | Skipped: 0 | Time: 28.5s
+Epoch   39/300 | Loss: 0.02298 | LR: 9.76e-05 | Skipped: 0 | Time: 28.4s
+Epoch   40/300 | Loss: 0.02142 | LR: 9.74e-05 | Skipped: 0 | Time: 28.5s
+Epoch   41/300 | Loss: 0.02129 | LR: 9.72e-05 | Skipped: 0 | Time: 28.4s
+Epoch   42/300 | Loss: 0.02042 | LR: 9.71e-05 | Skipped: 0 | Time: 28.4s
+Epoch   43/300 | Loss: 0.02071 | LR: 9.69e-05 | Skipped: 0 | Time: 28.4s
+Epoch   44/300 | Loss: 0.02042 | LR: 9.67e-05 | Skipped: 0 | Time: 28.4s
+Epoch   45/300 | Loss: 0.02090 | LR: 9.65e-05 | Skipped: 0 | Time: 28.4s
+Epoch   46/300 | Loss: 0.02040 | LR: 9.63e-05 | Skipped: 0 | Time: 28.3s
+Epoch   47/300 | Loss: 0.02068 | LR: 9.61e-05 | Skipped: 0 | Time: 28.4s
+Epoch   48/300 | Loss: 0.01921 | LR: 9.59e-05 | Skipped: 0 | Time: 28.4s
+Epoch   49/300 | Loss: 0.02046 | LR: 9.56e-05 | Skipped: 0 | Time: 28.3s
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+Epoch   50/300 | Loss: 0.01982 | LR: 9.54e-05 | Skipped: 0 | Time: 28.5s
+  Checkpoint saved: ./training_history/train_pvgis2005_2022_30sentinels_global_sun/irradiance_stage1_ep50.pth
+Epoch   51/300 | Loss: 0.01952 | LR: 9.52e-05 | Skipped: 0 | Time: 28.4s
+Epoch   52/300 | Loss: 0.01920 | LR: 9.50e-05 | Skipped: 0 | Time: 28.3s
+Epoch   53/300 | Loss: 0.01890 | LR: 9.47e-05 | Skipped: 0 | Time: 28.5s
+Epoch   54/300 | Loss: 0.01996 | LR: 9.45e-05 | Skipped: 0 | Time: 28.5s
+Epoch   55/300 | Loss: 0.01927 | LR: 9.42e-05 | Skipped: 0 | Time: 28.4s
+Epoch   56/300 | Loss: 0.01848 | LR: 9.40e-05 | Skipped: 0 | Time: 28.4s
+Epoch   57/300 | Loss: 0.02055 | LR: 9.37e-05 | Skipped: 0 | Time: 28.4s
+Epoch   58/300 | Loss: 0.01878 | LR: 9.35e-05 | Skipped: 0 | Time: 28.5s
+Epoch   59/300 | Loss: 0.01929 | LR: 9.32e-05 | Skipped: 0 | Time: 28.4s
+Epoch   60/300 | Loss: 0.01868 | LR: 9.29e-05 | Skipped: 0 | Time: 28.5s
+Epoch   61/300 | Loss: 0.01886 | LR: 9.26e-05 | Skipped: 0 | Time: 28.4s
+Epoch   62/300 | Loss: 0.01959 | LR: 9.24e-05 | Skipped: 0 | Time: 28.3s
+Epoch   63/300 | Loss: 0.01985 | LR: 9.21e-05 | Skipped: 0 | Time: 28.4s
+Epoch   64/300 | Loss: 0.01896 | LR: 9.18e-05 | Skipped: 0 | Time: 28.4s
+Epoch   65/300 | Loss: 0.01769 | LR: 9.15e-05 | Skipped: 0 | Time: 28.4s
+Epoch   66/300 | Loss: 0.01864 | LR: 9.12e-05 | Skipped: 0 | Time: 28.5s
+Epoch   67/300 | Loss: 0.01847 | LR: 9.09e-05 | Skipped: 0 | Time: 28.4s
+Epoch   68/300 | Loss: 0.01747 | LR: 9.05e-05 | Skipped: 0 | Time: 28.4s
+Epoch   69/300 | Loss: 0.01853 | LR: 9.02e-05 | Skipped: 0 | Time: 28.5s
+Epoch   70/300 | Loss: 0.01808 | LR: 8.99e-05 | Skipped: 0 | Time: 28.5s
+Epoch   71/300 | Loss: 0.01749 | LR: 8.96e-05 | Skipped: 0 | Time: 28.5s
+Epoch   72/300 | Loss: 0.01843 | LR: 8.92e-05 | Skipped: 0 | Time: 28.5s
+Epoch   73/300 | Loss: 0.01816 | LR: 8.89e-05 | Skipped: 0 | Time: 28.5s
+Epoch   74/300 | Loss: 0.01751 | LR: 8.86e-05 | Skipped: 0 | Time: 28.5s
+Epoch   75/300 | Loss: 0.01741 | LR: 8.82e-05 | Skipped: 0 | Time: 28.4s
+Epoch   76/300 | Loss: 0.01893 | LR: 8.79e-05 | Skipped: 0 | Time: 28.4s
+Epoch   77/300 | Loss: 0.01833 | LR: 8.75e-05 | Skipped: 0 | Time: 28.4s
+Epoch   78/300 | Loss: 0.01812 | LR: 8.72e-05 | Skipped: 0 | Time: 28.4s
+Epoch   79/300 | Loss: 0.01754 | LR: 8.68e-05 | Skipped: 0 | Time: 28.4s
+Epoch   80/300 | Loss: 0.01816 | LR: 8.64e-05 | Skipped: 0 | Time: 28.4s
+Epoch   81/300 | Loss: 0.01749 | LR: 8.61e-05 | Skipped: 0 | Time: 28.4s
+Epoch   82/300 | Loss: 0.01813 | LR: 8.57e-05 | Skipped: 0 | Time: 28.5s
+Epoch   83/300 | Loss: 0.01760 | LR: 8.53e-05 | Skipped: 0 | Time: 28.4s
+Epoch   84/300 | Loss: 0.01738 | LR: 8.49e-05 | Skipped: 0 | Time: 28.4s
+Epoch   85/300 | Loss: 0.01748 | LR: 8.45e-05 | Skipped: 0 | Time: 28.5s
+Epoch   86/300 | Loss: 0.01783 | LR: 8.41e-05 | Skipped: 0 | Time: 28.4s
+Epoch   87/300 | Loss: 0.01715 | LR: 8.38e-05 | Skipped: 0 | Time: 28.5s
+Epoch   88/300 | Loss: 0.01778 | LR: 8.34e-05 | Skipped: 0 | Time: 28.4s
+Epoch   89/300 | Loss: 0.01772 | LR: 8.30e-05 | Skipped: 0 | Time: 28.4s
+Epoch   90/300 | Loss: 0.01698 | LR: 8.25e-05 | Skipped: 0 | Time: 28.4s
+Epoch   91/300 | Loss: 0.01791 | LR: 8.21e-05 | Skipped: 0 | Time: 28.4s
+Epoch   92/300 | Loss: 0.01709 | LR: 8.17e-05 | Skipped: 0 | Time: 28.4s
+Epoch   93/300 | Loss: 0.01635 | LR: 8.13e-05 | Skipped: 0 | Time: 28.5s
+Epoch   94/300 | Loss: 0.01699 | LR: 8.09e-05 | Skipped: 0 | Time: 28.3s
+Epoch   95/300 | Loss: 0.01665 | LR: 8.05e-05 | Skipped: 0 | Time: 28.5s
+Epoch   96/300 | Loss: 0.01672 | LR: 8.00e-05 | Skipped: 0 | Time: 28.5s
+Epoch   97/300 | Loss: 0.01670 | LR: 7.96e-05 | Skipped: 0 | Time: 28.3s
+Epoch   98/300 | Loss: 0.01714 | LR: 7.92e-05 | Skipped: 0 | Time: 28.4s
+Epoch   99/300 | Loss: 0.01688 | LR: 7.87e-05 | Skipped: 0 | Time: 28.4s
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+Epoch  100/300 | Loss: 0.01679 | LR: 7.83e-05 | Skipped: 0 | Time: 28.4s
+  Checkpoint saved: ./training_history/train_pvgis2005_2022_30sentinels_global_sun/irradiance_stage1_ep100.pth
+Epoch  101/300 | Loss: 0.01583 | LR: 7.78e-05 | Skipped: 0 | Time: 28.4s
+Epoch  102/300 | Loss: 0.01702 | LR: 7.74e-05 | Skipped: 0 | Time: 28.5s
+Epoch  103/300 | Loss: 0.01704 | LR: 7.69e-05 | Skipped: 0 | Time: 28.5s
+Epoch  104/300 | Loss: 0.01685 | LR: 7.65e-05 | Skipped: 0 | Time: 28.3s
+Epoch  105/300 | Loss: 0.01638 | LR: 7.60e-05 | Skipped: 0 | Time: 28.4s
+Epoch  106/300 | Loss: 0.01695 | LR: 7.56e-05 | Skipped: 0 | Time: 28.4s
+Epoch  107/300 | Loss: 0.01684 | LR: 7.51e-05 | Skipped: 0 | Time: 28.3s
+Epoch  108/300 | Loss: 0.01783 | LR: 7.46e-05 | Skipped: 0 | Time: 28.4s
+Epoch  109/300 | Loss: 0.01677 | LR: 7.42e-05 | Skipped: 0 | Time: 28.4s
+Epoch  110/300 | Loss: 0.01611 | LR: 7.37e-05 | Skipped: 0 | Time: 28.3s
+Epoch  111/300 | Loss: 0.01721 | LR: 7.32e-05 | Skipped: 0 | Time: 28.4s
+Epoch  112/300 | Loss: 0.01593 | LR: 7.27e-05 | Skipped: 0 | Time: 28.4s
+Epoch  113/300 | Loss: 0.01689 | LR: 7.23e-05 | Skipped: 0 | Time: 28.3s
+Epoch  114/300 | Loss: 0.01655 | LR: 7.18e-05 | Skipped: 0 | Time: 28.4s
+Epoch  115/300 | Loss: 0.01660 | LR: 7.13e-05 | Skipped: 0 | Time: 28.4s
+Epoch  116/300 | Loss: 0.01748 | LR: 7.08e-05 | Skipped: 0 | Time: 28.4s
+Epoch  117/300 | Loss: 0.01648 | LR: 7.03e-05 | Skipped: 0 | Time: 28.3s
+Epoch  118/300 | Loss: 0.01696 | LR: 6.98e-05 | Skipped: 0 | Time: 28.4s
+Epoch  119/300 | Loss: 0.01612 | LR: 6.93e-05 | Skipped: 0 | Time: 28.5s
+Epoch  120/300 | Loss: 0.01644 | LR: 6.88e-05 | Skipped: 0 | Time: 28.3s
+Epoch  121/300 | Loss: 0.01651 | LR: 6.83e-05 | Skipped: 0 | Time: 28.4s
+Epoch  122/300 | Loss: 0.01640 | LR: 6.78e-05 | Skipped: 0 | Time: 28.5s
+Epoch  123/300 | Loss: 0.01545 | LR: 6.73e-05 | Skipped: 0 | Time: 28.3s
+Epoch  124/300 | Loss: 0.01612 | LR: 6.68e-05 | Skipped: 0 | Time: 28.4s
+Epoch  125/300 | Loss: 0.01586 | LR: 6.63e-05 | Skipped: 0 | Time: 28.4s
+Epoch  126/300 | Loss: 0.01663 | LR: 6.58e-05 | Skipped: 0 | Time: 28.3s
+Epoch  127/300 | Loss: 0.01584 | LR: 6.53e-05 | Skipped: 0 | Time: 28.4s
+Epoch  128/300 | Loss: 0.01590 | LR: 6.48e-05 | Skipped: 0 | Time: 28.4s
+Epoch  129/300 | Loss: 0.01536 | LR: 6.43e-05 | Skipped: 0 | Time: 28.4s
+Epoch  130/300 | Loss: 0.01581 | LR: 6.37e-05 | Skipped: 0 | Time: 28.4s
+Epoch  131/300 | Loss: 0.01599 | LR: 6.32e-05 | Skipped: 0 | Time: 28.5s
+Epoch  132/300 | Loss: 0.01596 | LR: 6.27e-05 | Skipped: 0 | Time: 28.5s
+Epoch  133/300 | Loss: 0.01536 | LR: 6.22e-05 | Skipped: 0 | Time: 28.3s
+Epoch  134/300 | Loss: 0.01580 | LR: 6.17e-05 | Skipped: 0 | Time: 28.4s
+Epoch  135/300 | Loss: 0.01622 | LR: 6.11e-05 | Skipped: 0 | Time: 28.6s
+Epoch  136/300 | Loss: 0.01707 | LR: 6.06e-05 | Skipped: 0 | Time: 28.3s
+Epoch  137/300 | Loss: 0.01579 | LR: 6.01e-05 | Skipped: 0 | Time: 28.4s
+Epoch  138/300 | Loss: 0.01610 | LR: 5.96e-05 | Skipped: 0 | Time: 28.5s
+Epoch  139/300 | Loss: 0.01529 | LR: 5.90e-05 | Skipped: 0 | Time: 28.4s
+Epoch  140/300 | Loss: 0.01569 | LR: 5.85e-05 | Skipped: 0 | Time: 28.5s
+Epoch  141/300 | Loss: 0.01596 | LR: 5.80e-05 | Skipped: 0 | Time: 28.4s
+Epoch  142/300 | Loss: 0.01670 | LR: 5.74e-05 | Skipped: 0 | Time: 28.4s
+Epoch  143/300 | Loss: 0.01555 | LR: 5.69e-05 | Skipped: 0 | Time: 28.5s
+Epoch  144/300 | Loss: 0.01580 | LR: 5.64e-05 | Skipped: 0 | Time: 28.5s
+Epoch  145/300 | Loss: 0.01554 | LR: 5.59e-05 | Skipped: 0 | Time: 28.5s
+Epoch  146/300 | Loss: 0.01584 | LR: 5.53e-05 | Skipped: 0 | Time: 28.4s
+Epoch  147/300 | Loss: 0.01546 | LR: 5.48e-05 | Skipped: 0 | Time: 28.4s
+Epoch  148/300 | Loss: 0.01539 | LR: 5.43e-05 | Skipped: 0 | Time: 28.5s
+Epoch  149/300 | Loss: 0.01544 | LR: 5.37e-05 | Skipped: 0 | Time: 28.4s
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+Epoch  150/300 | Loss: 0.01563 | LR: 5.32e-05 | Skipped: 0 | Time: 28.5s
+  Checkpoint saved: ./training_history/train_pvgis2005_2022_30sentinels_global_sun/irradiance_stage1_ep150.pth
+Epoch  151/300 | Loss: 0.01540 | LR: 5.26e-05 | Skipped: 0 | Time: 28.5s
+Epoch  152/300 | Loss: 0.01514 | LR: 5.21e-05 | Skipped: 0 | Time: 28.3s
+Epoch  153/300 | Loss: 0.01515 | LR: 5.16e-05 | Skipped: 0 | Time: 28.4s
+Epoch  154/300 | Loss: 0.01551 | LR: 5.10e-05 | Skipped: 0 | Time: 28.4s
+Epoch  155/300 | Loss: 0.01582 | LR: 5.05e-05 | Skipped: 0 | Time: 28.3s
+Epoch  156/300 | Loss: 0.01517 | LR: 5.00e-05 | Skipped: 0 | Time: 28.4s
+Epoch  157/300 | Loss: 0.01570 | LR: 4.94e-05 | Skipped: 0 | Time: 28.4s
+Epoch  158/300 | Loss: 0.01544 | LR: 4.89e-05 | Skipped: 0 | Time: 28.4s
+Epoch  159/300 | Loss: 0.01523 | LR: 4.84e-05 | Skipped: 0 | Time: 28.3s
+Epoch  160/300 | Loss: 0.01518 | LR: 4.78e-05 | Skipped: 0 | Time: 28.4s
+Epoch  161/300 | Loss: 0.01538 | LR: 4.73e-05 | Skipped: 0 | Time: 28.5s
+Epoch  162/300 | Loss: 0.01575 | LR: 4.67e-05 | Skipped: 0 | Time: 28.3s
+Epoch  163/300 | Loss: 0.01525 | LR: 4.62e-05 | Skipped: 0 | Time: 28.5s
+Epoch  164/300 | Loss: 0.01522 | LR: 4.57e-05 | Skipped: 0 | Time: 28.4s
+Epoch  165/300 | Loss: 0.01567 | LR: 4.51e-05 | Skipped: 0 | Time: 28.3s
+Epoch  166/300 | Loss: 0.01461 | LR: 4.46e-05 | Skipped: 0 | Time: 28.4s
+Epoch  167/300 | Loss: 0.01446 | LR: 4.41e-05 | Skipped: 0 | Time: 28.5s
+Epoch  168/300 | Loss: 0.01541 | LR: 4.36e-05 | Skipped: 0 | Time: 28.4s
+Epoch  169/300 | Loss: 0.01499 | LR: 4.30e-05 | Skipped: 0 | Time: 28.5s
+Epoch  170/300 | Loss: 0.01593 | LR: 4.25e-05 | Skipped: 0 | Time: 28.4s
+Epoch  171/300 | Loss: 0.01513 | LR: 4.20e-05 | Skipped: 0 | Time: 28.4s
+Epoch  172/300 | Loss: 0.01479 | LR: 4.14e-05 | Skipped: 0 | Time: 28.4s
+Epoch  173/300 | Loss: 0.01522 | LR: 4.09e-05 | Skipped: 0 | Time: 28.5s
+Epoch  174/300 | Loss: 0.01485 | LR: 4.04e-05 | Skipped: 0 | Time: 28.4s
+Epoch  175/300 | Loss: 0.01430 | LR: 3.99e-05 | Skipped: 0 | Time: 28.3s
+Epoch  176/300 | Loss: 0.01512 | LR: 3.93e-05 | Skipped: 0 | Time: 28.5s
+Epoch  177/300 | Loss: 0.01466 | LR: 3.88e-05 | Skipped: 0 | Time: 28.4s
+Epoch  178/300 | Loss: 0.01528 | LR: 3.83e-05 | Skipped: 0 | Time: 28.4s
+Epoch  179/300 | Loss: 0.01422 | LR: 3.78e-05 | Skipped: 0 | Time: 28.5s
+Epoch  180/300 | Loss: 0.01507 | LR: 3.73e-05 | Skipped: 0 | Time: 28.4s
+Epoch  181/300 | Loss: 0.01439 | LR: 3.67e-05 | Skipped: 0 | Time: 28.4s
+Epoch  182/300 | Loss: 0.01462 | LR: 3.62e-05 | Skipped: 0 | Time: 28.4s
+Epoch  183/300 | Loss: 0.01394 | LR: 3.57e-05 | Skipped: 0 | Time: 28.5s
+Epoch  184/300 | Loss: 0.01499 | LR: 3.52e-05 | Skipped: 0 | Time: 28.3s
+Epoch  185/300 | Loss: 0.01458 | LR: 3.47e-05 | Skipped: 0 | Time: 28.4s
+Epoch  186/300 | Loss: 0.01416 | LR: 3.42e-05 | Skipped: 0 | Time: 28.4s
+Epoch  187/300 | Loss: 0.01378 | LR: 3.37e-05 | Skipped: 0 | Time: 28.4s
+Epoch  188/300 | Loss: 0.01446 | LR: 3.32e-05 | Skipped: 0 | Time: 28.3s
+Epoch  189/300 | Loss: 0.01491 | LR: 3.27e-05 | Skipped: 0 | Time: 28.4s
+Epoch  190/300 | Loss: 0.01419 | LR: 3.22e-05 | Skipped: 0 | Time: 28.4s
+Epoch  191/300 | Loss: 0.01480 | LR: 3.17e-05 | Skipped: 0 | Time: 28.4s
+Epoch  192/300 | Loss: 0.01476 | LR: 3.12e-05 | Skipped: 0 | Time: 28.5s
+Epoch  193/300 | Loss: 0.01473 | LR: 3.07e-05 | Skipped: 0 | Time: 28.5s
+Epoch  194/300 | Loss: 0.01499 | LR: 3.02e-05 | Skipped: 0 | Time: 28.4s
+Epoch  195/300 | Loss: 0.01369 | LR: 2.97e-05 | Skipped: 0 | Time: 28.4s
+Epoch  196/300 | Loss: 0.01403 | LR: 2.92e-05 | Skipped: 0 | Time: 28.5s
+Epoch  197/300 | Loss: 0.01427 | LR: 2.87e-05 | Skipped: 0 | Time: 28.3s
+Epoch  198/300 | Loss: 0.01442 | LR: 2.83e-05 | Skipped: 0 | Time: 28.4s
+Epoch  199/300 | Loss: 0.01335 | LR: 2.78e-05 | Skipped: 0 | Time: 28.5s
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+Epoch  200/300 | Loss: 0.01444 | LR: 2.73e-05 | Skipped: 0 | Time: 28.4s
+  Checkpoint saved: ./training_history/train_pvgis2005_2022_30sentinels_global_sun/irradiance_stage1_ep200.pth
+Epoch  201/300 | Loss: 0.01360 | LR: 2.68e-05 | Skipped: 0 | Time: 28.4s
+Epoch  202/300 | Loss: 0.01397 | LR: 2.64e-05 | Skipped: 0 | Time: 28.4s
+Epoch  203/300 | Loss: 0.01387 | LR: 2.59e-05 | Skipped: 0 | Time: 28.5s
+Epoch  204/300 | Loss: 0.01344 | LR: 2.54e-05 | Skipped: 0 | Time: 28.3s
+Epoch  205/300 | Loss: 0.01390 | LR: 2.50e-05 | Skipped: 0 | Time: 28.5s
+Epoch  206/300 | Loss: 0.01367 | LR: 2.45e-05 | Skipped: 0 | Time: 28.4s
+Epoch  207/300 | Loss: 0.01382 | LR: 2.41e-05 | Skipped: 0 | Time: 28.3s
+Epoch  208/300 | Loss: 0.01461 | LR: 2.36e-05 | Skipped: 0 | Time: 28.4s
+Epoch  209/300 | Loss: 0.01379 | LR: 2.32e-05 | Skipped: 0 | Time: 28.4s
+Epoch  210/300 | Loss: 0.01366 | LR: 2.27e-05 | Skipped: 0 | Time: 28.3s
+Epoch  211/300 | Loss: 0.01409 | LR: 2.23e-05 | Skipped: 0 | Time: 28.4s
+Epoch  212/300 | Loss: 0.01395 | LR: 2.18e-05 | Skipped: 0 | Time: 28.4s
+Epoch  213/300 | Loss: 0.01334 | LR: 2.14e-05 | Skipped: 0 | Time: 28.3s
+Epoch  214/300 | Loss: 0.01370 | LR: 2.10e-05 | Skipped: 0 | Time: 28.4s
+Epoch  215/300 | Loss: 0.01320 | LR: 2.05e-05 | Skipped: 0 | Time: 28.5s
+Epoch  216/300 | Loss: 0.01414 | LR: 2.01e-05 | Skipped: 0 | Time: 28.5s
+Epoch  217/300 | Loss: 0.01453 | LR: 1.97e-05 | Skipped: 0 | Time: 28.3s
+Epoch  218/300 | Loss: 0.01350 | LR: 1.93e-05 | Skipped: 0 | Time: 28.4s
+Epoch  219/300 | Loss: 0.01262 | LR: 1.89e-05 | Skipped: 0 | Time: 28.4s
+Epoch  220/300 | Loss: 0.01334 | LR: 1.85e-05 | Skipped: 0 | Time: 28.4s
+Epoch  221/300 | Loss: 0.01371 | LR: 1.80e-05 | Skipped: 0 | Time: 28.4s
+Epoch  222/300 | Loss: 0.01411 | LR: 1.76e-05 | Skipped: 0 | Time: 28.4s
+Epoch  223/300 | Loss: 0.01339 | LR: 1.72e-05 | Skipped: 0 | Time: 28.4s
+Epoch  224/300 | Loss: 0.01347 | LR: 1.69e-05 | Skipped: 0 | Time: 28.4s
+Epoch  225/300 | Loss: 0.01348 | LR: 1.65e-05 | Skipped: 0 | Time: 28.4s
+Epoch  226/300 | Loss: 0.01283 | LR: 1.61e-05 | Skipped: 0 | Time: 28.3s
+Epoch  227/300 | Loss: 0.01322 | LR: 1.57e-05 | Skipped: 0 | Time: 28.5s
+Epoch  228/300 | Loss: 0.01394 | LR: 1.53e-05 | Skipped: 0 | Time: 28.4s
+Epoch  229/300 | Loss: 0.01368 | LR: 1.49e-05 | Skipped: 0 | Time: 28.5s
+Epoch  230/300 | Loss: 0.01320 | LR: 1.46e-05 | Skipped: 0 | Time: 28.4s
+Epoch  231/300 | Loss: 0.01347 | LR: 1.42e-05 | Skipped: 0 | Time: 28.5s
+Epoch  232/300 | Loss: 0.01349 | LR: 1.38e-05 | Skipped: 0 | Time: 28.4s
+Epoch  233/300 | Loss: 0.01310 | LR: 1.35e-05 | Skipped: 0 | Time: 28.3s
+Epoch  234/300 | Loss: 0.01346 | LR: 1.31e-05 | Skipped: 0 | Time: 28.4s
+Epoch  235/300 | Loss: 0.01298 | LR: 1.28e-05 | Skipped: 0 | Time: 28.4s
+Epoch  236/300 | Loss: 0.01341 | LR: 1.24e-05 | Skipped: 0 | Time: 28.4s
+Epoch  237/300 | Loss: 0.01341 | LR: 1.21e-05 | Skipped: 0 | Time: 28.5s
+Epoch  238/300 | Loss: 0.01276 | LR: 1.18e-05 | Skipped: 0 | Time: 28.4s
+Epoch  239/300 | Loss: 0.01282 | LR: 1.14e-05 | Skipped: 0 | Time: 28.4s
+Epoch  240/300 | Loss: 0.01305 | LR: 1.11e-05 | Skipped: 0 | Time: 28.5s
+Epoch  241/300 | Loss: 0.01344 | LR: 1.08e-05 | Skipped: 0 | Time: 28.5s
+Epoch  242/300 | Loss: 0.01347 | LR: 1.05e-05 | Skipped: 0 | Time: 28.3s
+Epoch  243/300 | Loss: 0.01293 | LR: 1.01e-05 | Skipped: 0 | Time: 28.4s
+Epoch  244/300 | Loss: 0.01354 | LR: 9.83e-06 | Skipped: 0 | Time: 28.5s
+Epoch  245/300 | Loss: 0.01307 | LR: 9.53e-06 | Skipped: 0 | Time: 28.4s
+Epoch  246/300 | Loss: 0.01327 | LR: 9.23e-06 | Skipped: 0 | Time: 28.3s
+Epoch  247/300 | Loss: 0.01292 | LR: 8.94e-06 | Skipped: 0 | Time: 28.5s
+Epoch  248/300 | Loss: 0.01302 | LR: 8.65e-06 | Skipped: 0 | Time: 28.5s
+Epoch  249/300 | Loss: 0.01360 | LR: 8.36e-06 | Skipped: 0 | Time: 28.3s
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+Epoch  250/300 | Loss: 0.01353 | LR: 8.09e-06 | Skipped: 0 | Time: 28.4s
+  Checkpoint saved: ./training_history/train_pvgis2005_2022_30sentinels_global_sun/irradiance_stage1_ep250.pth
+Epoch  251/300 | Loss: 0.01252 | LR: 7.81e-06 | Skipped: 0 | Time: 28.5s
+Epoch  252/300 | Loss: 0.01328 | LR: 7.54e-06 | Skipped: 0 | Time: 28.3s
+Epoch  253/300 | Loss: 0.01349 | LR: 7.28e-06 | Skipped: 0 | Time: 28.4s
+Epoch  254/300 | Loss: 0.01344 | LR: 7.02e-06 | Skipped: 0 | Time: 28.4s
+Epoch  255/300 | Loss: 0.01362 | LR: 6.77e-06 | Skipped: 0 | Time: 28.3s
+Epoch  256/300 | Loss: 0.01299 | LR: 6.52e-06 | Skipped: 0 | Time: 28.4s
+Epoch  257/300 | Loss: 0.01326 | LR: 6.27e-06 | Skipped: 0 | Time: 28.4s
+Epoch  258/300 | Loss: 0.01368 | LR: 6.04e-06 | Skipped: 0 | Time: 28.4s
+Epoch  259/300 | Loss: 0.01319 | LR: 5.80e-06 | Skipped: 0 | Time: 28.3s
+Epoch  260/300 | Loss: 0.01256 | LR: 5.58e-06 | Skipped: 0 | Time: 28.4s
+Epoch  261/300 | Loss: 0.01291 | LR: 5.35e-06 | Skipped: 0 | Time: 28.5s
+Epoch  262/300 | Loss: 0.01330 | LR: 5.14e-06 | Skipped: 0 | Time: 28.3s
+Epoch  263/300 | Loss: 0.01292 | LR: 4.92e-06 | Skipped: 0 | Time: 28.5s
+Epoch  264/300 | Loss: 0.01352 | LR: 4.72e-06 | Skipped: 0 | Time: 28.4s
+Epoch  265/300 | Loss: 0.01270 | LR: 4.52e-06 | Skipped: 0 | Time: 28.3s
+Epoch  266/300 | Loss: 0.01337 | LR: 4.32e-06 | Skipped: 0 | Time: 28.4s
+Epoch  267/300 | Loss: 0.01292 | LR: 4.13e-06 | Skipped: 0 | Time: 28.4s
+Epoch  268/300 | Loss: 0.01347 | LR: 3.94e-06 | Skipped: 0 | Time: 28.3s
+Epoch  269/300 | Loss: 0.01311 | LR: 3.77e-06 | Skipped: 0 | Time: 28.4s
+Epoch  270/300 | Loss: 0.01232 | LR: 3.59e-06 | Skipped: 0 | Time: 28.5s
+Epoch  271/300 | Loss: 0.01290 | LR: 3.42e-06 | Skipped: 0 | Time: 28.4s
+Epoch  272/300 | Loss: 0.01292 | LR: 3.26e-06 | Skipped: 0 | Time: 28.4s
+Epoch  273/300 | Loss: 0.01254 | LR: 3.10e-06 | Skipped: 0 | Time: 28.5s
+Epoch  274/300 | Loss: 0.01301 | LR: 2.95e-06 | Skipped: 0 | Time: 28.5s
+Epoch  275/300 | Loss: 0.01264 | LR: 2.80e-06 | Skipped: 0 | Time: 28.3s
+Epoch  276/300 | Loss: 0.01220 | LR: 2.66e-06 | Skipped: 0 | Time: 28.5s
+Epoch  277/300 | Loss: 0.01269 | LR: 2.53e-06 | Skipped: 0 | Time: 28.5s
+Epoch  278/300 | Loss: 0.01304 | LR: 2.40e-06 | Skipped: 0 | Time: 28.3s
+Epoch  279/300 | Loss: 0.01281 | LR: 2.28e-06 | Skipped: 0 | Time: 28.5s
+Epoch  280/300 | Loss: 0.01283 | LR: 2.16e-06 | Skipped: 0 | Time: 28.5s
+Epoch  281/300 | Loss: 0.01268 | LR: 2.04e-06 | Skipped: 0 | Time: 28.4s
+Epoch  282/300 | Loss: 0.01353 | LR: 1.94e-06 | Skipped: 0 | Time: 28.4s
+Epoch  283/300 | Loss: 0.01257 | LR: 1.84e-06 | Skipped: 0 | Time: 28.5s
+Epoch  284/300 | Loss: 0.01238 | LR: 1.74e-06 | Skipped: 0 | Time: 28.4s
+Epoch  285/300 | Loss: 0.01245 | LR: 1.65e-06 | Skipped: 0 | Time: 28.5s
+Epoch  286/300 | Loss: 0.01321 | LR: 1.57e-06 | Skipped: 0 | Time: 28.4s
+Epoch  287/300 | Loss: 0.01229 | LR: 1.49e-06 | Skipped: 0 | Time: 28.5s
+Epoch  288/300 | Loss: 0.01288 | LR: 1.42e-06 | Skipped: 0 | Time: 28.4s
+Epoch  289/300 | Loss: 0.01273 | LR: 1.35e-06 | Skipped: 0 | Time: 28.5s
+Epoch  290/300 | Loss: 0.01270 | LR: 1.29e-06 | Skipped: 0 | Time: 28.4s
+Epoch  291/300 | Loss: 0.01329 | LR: 1.24e-06 | Skipped: 0 | Time: 28.4s
+Epoch  292/300 | Loss: 0.01300 | LR: 1.19e-06 | Skipped: 0 | Time: 28.5s
+Epoch  293/300 | Loss: 0.01287 | LR: 1.14e-06 | Skipped: 0 | Time: 28.4s
+Epoch  294/300 | Loss: 0.01324 | LR: 1.10e-06 | Skipped: 0 | Time: 28.4s
+Epoch  295/300 | Loss: 0.01311 | LR: 1.07e-06 | Skipped: 0 | Time: 28.5s
+Epoch  296/300 | Loss: 0.01267 | LR: 1.05e-06 | Skipped: 0 | Time: 28.4s
+Epoch  297/300 | Loss: 0.01341 | LR: 1.03e-06 | Skipped: 0 | Time: 28.3s
+Epoch  298/300 | Loss: 0.01222 | LR: 1.01e-06 | Skipped: 0 | Time: 28.5s
+Epoch  299/300 | Loss: 0.01284 | LR: 1.00e-06 | Skipped: 0 | Time: 28.4s
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+wandb: updating run metadata
+wandb: uploading training_history/train_pvgis2005_2022_30sentinels_global_sun/irradiance_stage1_ep300.pth; uploading training_history/train_pvgis2005_2022_30sentinels_global_sun/irradiance_stage1_final.pth; uploading wandb-summary.json; uploading output.log
+wandb: uploading training_history/train_pvgis2005_2022_30sentinels_global_sun/irradiance_stage1_ep300.pth; uploading training_history/train_pvgis2005_2022_30sentinels_global_sun/irradiance_stage1_final.pth; uploading wandb-summary.json
+wandb: uploading training_history/train_pvgis2005_2022_30sentinels_global_sun/irradiance_stage1_ep300.pth; uploading training_history/train_pvgis2005_2022_30sentinels_global_sun/irradiance_stage1_final.pth
+wandb: uploading training_history/train_pvgis2005_2022_30sentinels_global_sun/irradiance_stage1_ep300.pth; uploading training_history/train_pvgis2005_2022_30sentinels_global_sun/irradiance_stage1_final.pth; uploading history steps 20680-20699, summary, console lines 310-315
+wandb: uploading training_history/train_pvgis2005_2022_30sentinels_global_sun/irradiance_stage1_ep300.pth; uploading training_history/train_pvgis2005_2022_30sentinels_global_sun/irradiance_stage1_final.pth
+wandb: uploading training_history/train_pvgis2005_2022_30sentinels_global_sun/irradiance_stage1_ep300.pth
+wandb: uploading data
+wandb: 
+wandb: Run history:
+wandb:                 epoch ▁▁▁▁▁▁▁▂▂▂▂▂▂▂▃▃▄▄▅▅▅▅▅▆▆▆▆▆▆▆▆▆▇▇▇▇████
+wandb:      train/epoch_loss █▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:    train/epoch_time_s ▂▅▂▆▂▆▃▆▂▆▁▂▆▅▅▇▆▆▁▂▆▃█▂▅▆▁▅▆▂▆▁▄▅▅▅▆█▁▆
+wandb:       train/grad_norm █▃▁▃▃▁▃▃▁▁▂▁▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:   train/learning_rate ▂███████▇▇▇▇▇▆▆▆▆▅▅▅▄▄▄▃▃▃▃▂▂▂▂▂▂▂▂▁▁▁▁▁
+wandb: train/skipped_batches ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:       train/step_loss █▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb: 
+wandb: Run summary:
+wandb:                 epoch 300
+wandb:      final_train_loss 0.01316
+wandb:          total_epochs 300
+wandb:           total_steps 20700
+wandb:      train/epoch_loss 0.01316
+wandb:    train/epoch_time_s 28.44149
+wandb:       train/grad_norm 0.07355
+wandb:   train/learning_rate 0.0
+wandb: train/skipped_batches 0
+wandb:       train/step_loss 0.01195
+wandb: 
+wandb: 🚀 View run train_pvgis2005_2022_30sentinels_global_sun-stage1 at: https://wandb.ai/stivengjinaj-politecnico-di-torino/physense-irradiance/runs/okntatep
+wandb: ⭐️ View project at: https://wandb.ai/stivengjinaj-politecnico-di-torino/physense-irradiance
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 7 other file(s)
+wandb: Find logs at: ./wandb/run-20260420_093430-okntatep/logs
+Epoch  300/300 | Loss: 0.01316 | LR: 1.00e-06 | Skipped: 0 | Time: 28.4s
+  Checkpoint saved: ./training_history/train_pvgis2005_2022_30sentinels_global_sun/irradiance_stage1_ep300.pth
+
+Done. Final checkpoint: ./training_history/train_pvgis2005_2022_30sentinels_global_sun/irradiance_stage1_final.pth

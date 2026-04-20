@@ -14,15 +14,15 @@ NUM_SENTINELS = 30
 EPOCHS        = 50
 LR            = 0.25
 BATCH_SIZE    = 64
-STAGE1_CKPT   = "./training_history/train_pvgis2005_2022_30sentinels_sun/irradiance_stage1_final.pth"
+STAGE1_CKPT   = "./training_history/train_pvgis2005_2022_30sentinels_global_sun/irradiance_stage1_final.pth"
 IRRAD_PATH    = "datasets/irradiance_train.npy"
 SUN_HEIGHT_PATH = "datasets/sun_height.npy"
 COORDS_PATH   = "datasets/coords.npy"
-RESULTS_DIR   = "./training_history/train_pvgis2005_2022_30sentinels_sun"
+RESULTS_DIR   = "./training_history/train_pvgis2005_2022_30sentinels_global_sun"
 
 WANDB_PROJECT  = "physense-irradiance"
 WANDB_ENTITY   = "stivengjinaj-politecnico-di-torino"
-WANDB_RUN_NAME = "sentinelpv-stage2"
+WANDB_RUN_NAME = "train_pvgis2005_2022_30sentinels_global_sun-stage2"
 
 TELEGRAM_TOKEN = "8647539434:AAGQ4Ik9OVVEd0Z0QhlDBHpAyTjnrIUmTms"
 TELEGRAM_CHAT_ID = "6694449067"

@@ -32,8 +32,8 @@ PANEL_IDS_PATH = "training_history/train_pvgis2005_2022_30sentinels_sun/dataset/
 
 IRRAD_MIN = 0.0
 IRRAD_MAX = 1108.010010
-SUN_MIN   = 6.656667
-SUN_MAX   = 46.473969
+SUN_MIN   = 0.0
+SUN_MAX   = 68.989998
 
 
 class IrradianceReconstructor:

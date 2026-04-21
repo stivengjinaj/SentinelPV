@@ -10,18 +10,18 @@ from torch.utils.data import DataLoader
 from datasets.IrradianceDataset import IrradianceDataset
 from models.transolver_pv import IrradianceModel
 
-NUM_SENTINELS = 100
+NUM_SENTINELS = 30
 EPOCHS        = 50
 LR            = 0.25
 BATCH_SIZE    = 64
-STAGE1_CKPT   = "./training_history/train_pvgis2005_2022_100sentinels/irradiance_stage1_final.pth"
-IRRAD_PATH    = "datasets/irradiance_train.npy"
-COORDS_PATH   = "datasets/coords.npy"
-RESULTS_DIR   = "./training_history/train_pvgis2005_2022_100sentinels"
+STAGE1_CKPT   = "./training_history/train_pvgis2005_30sentinels_64slice/irradiance_stage1_final.pth"
+IRRAD_PATH    = "./training_history/train_pvgis2005_30sentinels_64slice/dataset/irradiance_train.npy"
+COORDS_PATH   = "./training_history/train_pvgis2005_30sentinels_64slice/dataset/coords.npy"
+RESULTS_DIR   = "./training_history/train_pvgis2005_30sentinels_64slice"
 
 WANDB_PROJECT  = "physense-irradiance"
 WANDB_ENTITY   = "stivengjinaj-politecnico-di-torino"
-WANDB_RUN_NAME = "sentinelpv-stage2"
+WANDB_RUN_NAME = "train_pvgis2005_30sentinels_64slice-stage2"
 
 TELEGRAM_TOKEN = "8647539434:AAGQ4Ik9OVVEd0Z0QhlDBHpAyTjnrIUmTms"
 TELEGRAM_CHAT_ID = "6694449067"

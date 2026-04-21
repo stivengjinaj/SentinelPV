@@ -193,7 +193,7 @@ class IrradianceModel(nn.Module):
         n_layers:   int = 12,
         n_hidden:   int = 374,
         n_head:     int = 8,
-        slice_num:  int = 32,
+        slice_num:  int = 64,
         ref:        int = 4,
         dropout:    float = 0.0,
     ):

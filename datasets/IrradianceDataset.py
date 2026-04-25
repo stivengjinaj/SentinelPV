@@ -4,41 +4,43 @@ from torch.utils.data import Dataset
 
 
 class IrradianceDataset(Dataset):
-    """
-    Dataset for irradiance-only PhySense training.
+    def __init__(
+        self,
+        irradiance_path: str,
+        coords_path:     str,
+        t_in:            int = 12,
+        t_out:           int = 24,
+    ):
+        irradiance = np.load(irradiance_path).astype(np.float32)  # (T, N)
+        coords     = np.load(coords_path).astype(np.float32)      # (N, 2)
 
-    Expects:
-        irradiance_path : .npy of shape (T, N) — one scalar per panel per timestep
-        coords_path     : .npy of shape (N, 2) — (lat, lon) for each panel
+        self.t_in  = t_in
+        self.t_out = t_out
 
-    Returns per sample:
-        pos : (N, 2)  float32 — panel coordinates (same for every sample)
-        y   : (N, 1)  float32 — irradiance at each panel at time t
-    """
+        coords_min  = coords.min(axis=0, keepdims=True)
+        coords_max  = coords.max(axis=0, keepdims=True)
+        self.pos_tensor = torch.tensor(
+            (coords - coords_min) / (coords_max - coords_min + 1e-8),
+            dtype=torch.float32,
+        )
 
-    def __init__(self, irradiance_path: str, coords_path: str):
-        irradiance = np.load(irradiance_path)   # (T, N)
-        coords     = np.load(coords_path)        # (N, 2)
+        irr = torch.tensor(irradiance, dtype=torch.float32)
+        self.y_min = float(irr.min())
+        self.y_max = float(irr.max())
+        self.irr   = (irr - self.y_min) / (self.y_max - self.y_min + 1e-8)  # (T, N)
 
-        # Normalise coordinates to [0, 1] so the reference grid makes sense
-        coords_min = coords.min(axis=0, keepdims=True)
-        coords_max = coords.max(axis=0, keepdims=True)
-        coords_norm = (coords - coords_min) / (coords_max - coords_min + 1e-8)
+        # Valid starting indices. Need t_in history and t_out future
+        self.valid_starts = list(range(t_in, len(self.irr) - t_out + 1))
 
-        self.pos_tensor = torch.tensor(coords_norm, dtype=torch.float32)   # (N, 2)
-        self.y_data     = torch.tensor(irradiance,  dtype=torch.float32)   # (T, N)
+    def __len__(self):
+        return len(self.valid_starts)
 
-        # Normalise irradiance to [0, 1] using global statistics
-        self.y_min = float(self.y_data.min())
-        self.y_max = float(self.y_data.max())
-        self.y_data = (self.y_data - self.y_min) / (self.y_max - self.y_min + 1e-8)
-
-    def __len__(self) -> int:
-        return len(self.y_data)
-
-    def __getitem__(self, idx: int):
-        y = self.y_data[idx].unsqueeze(-1)   # (N, 1)
+    def __getitem__(self, idx):
+        start = self.valid_starts[idx]
+        x_seq = self.irr[start - self.t_in : start]         # (T_in, N)
+        y_seq = self.irr[start : start + self.t_out]        # (T_out, N)
         return {
-            'pos': self.pos_tensor,           # (N, 2)
-            'y':   y,                         # (N, 1)
+            'pos':   self.pos_tensor,                        # (N, 2)
+            'x_seq': x_seq.T,                               # (N, T_in)
+            'y_seq': y_seq.T,                               # (N, T_out)
         }

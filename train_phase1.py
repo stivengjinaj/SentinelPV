@@ -8,18 +8,19 @@ from torch.optim.lr_scheduler import CosineAnnealingLR, LinearLR, SequentialLR
 from torch.utils.data import DataLoader, WeightedRandomSampler
 
 from datasets.IrradianceDataset import IrradianceDataset
+from helpers.wandb_plots import evaluate, log_nae_scalars
 from models.transolver_pv import IrradianceModel
 
-EPOCHS      = 50
+EPOCHS      = 300
 BATCH_SIZE  = 128
 LR          = 3e-4
-SAVE_DIR    = "./training_history/train_pvgis2005_20022_30sentinels_50epochs"
-IRRAD_PATH  = "./training_history/train_pvgis2005_20022_30sentinels_50epochs/dataset/irradiance_train.npy"
-COORDS_PATH = "./training_history/train_pvgis2005_20022_30sentinels_50epochs/dataset/coords.npy"
+SAVE_DIR    = "./training_history/train_pvgis2005_15sentinels_temporal"
+IRRAD_PATH  = f"{SAVE_DIR}/dataset/irradiance_train.npy"
+COORDS_PATH = f"{SAVE_DIR}/dataset/coords.npy"
 
 WANDB_PROJECT  = "physense-irradiance"
 WANDB_ENTITY   = "stivengjinaj-politecnico-di-torino"
-WANDB_RUN_NAME = "train_pvgis2005_2022_30sentinels_50epochs-stage1"
+WANDB_RUN_NAME = "train_pvgis2005_15sentinels_temporal-stage1"
 
 TELEGRAM_TOKEN = "8647539434:AAGQ4Ik9OVVEd0Z0QhlDBHpAyTjnrIUmTms"
 TELEGRAM_CHAT_ID = "6694449067"
@@ -46,15 +47,14 @@ def train():
 
     dataset = IrradianceDataset(IRRAD_PATH, COORDS_PATH)
 
-    mean_irr     = dataset.y_data.mean(dim=1).squeeze()          # (T,)
-    bins         = torch.quantile(mean_irr, torch.linspace(0, 1, 5))
-    bin_ids      = torch.bucketize(mean_irr, bins[1:-1])          # 4 buckets: 0,1,2,3
-    class_counts = torch.bincount(bin_ids)
-    weights      = 1.0 / class_counts[bin_ids].float()
-    sampler      = WeightedRandomSampler(weights, len(weights), replacement=True)
+    loader = DataLoader(
+        dataset,
+        batch_size  = BATCH_SIZE,
+        shuffle     = True,
+        num_workers = 4,
+        pin_memory  = True,
+    )
 
-    loader = DataLoader(dataset, batch_size=BATCH_SIZE, sampler=sampler,
-                        num_workers=4, pin_memory=True)
     
     N = dataset.pos_tensor.shape[0]
     T = len(dataset)
@@ -63,7 +63,8 @@ def train():
     model = IrradianceModel(
         space_dim = 2,
         fun_dim   = 1,
-        out_dim   = 1,
+        out_dim   = 24,
+        t_in      = 12,
         n_layers  = 12,
         n_hidden  = 374,
         slice_num = 32,
@@ -76,23 +77,20 @@ def train():
         project = WANDB_PROJECT,
         entity  = WANDB_ENTITY,
         name    = WANDB_RUN_NAME,
-        config  = {
-            # training
-            "epochs":           EPOCHS,
-            "batch_size":       BATCH_SIZE,
-            "learning_rate":    LR,
-            "lr_warmup_epochs": 10,
-            "grad_clip":        1.0,
-            # model
-            "n_layers":         12,
-            "n_hidden":         374,
-            "slice_num":        32,
-            "ref_grid":         4,
-            "fun_dim":          1,
-            "space_dim":        2,
-            # data
-            "n_panels":         N,
-            "n_timesteps":      T,
+        config = {
+            "epochs":        EPOCHS,
+            "batch_size":    BATCH_SIZE,
+            "learning_rate": LR,
+            "n_layers":      12,
+            "n_hidden":      374,
+            "slice_num":     32,
+            "ref_grid":      4,
+            "fun_dim":       1,
+            "space_dim":     2,
+            "t_in":          12,    # add
+            "t_out":         24,    # add
+            "n_panels":      N,
+            "n_timesteps":   T,
         },
         tags = ["stage1", "flow-matching", "irradiance"],
     )
@@ -151,6 +149,7 @@ def train():
         n_valid  = max(len(loader) - skipped, 1)
         avg_loss = epoch_loss / n_valid
         elapsed  = time.time() - t0
+        irrad_range = dataset.y_max - dataset.y_min
 
         print(f"Epoch {epoch:>4}/{EPOCHS} | Loss: {avg_loss:.5f} | "
               f"LR: {current_lr:.2e} | Skipped: {skipped} | Time: {elapsed:.1f}s")
@@ -162,6 +161,11 @@ def train():
             "train/epoch_time_s":     elapsed,
             "epoch":                  epoch,
         }, step=global_step)
+
+        if epoch % 5 == 0 or epoch == 1 or epoch == EPOCHS:
+            y_true_norm, y_pred_norm = evaluate(model, dataset, device)
+            log_nae_scalars(y_true_norm, y_pred_norm, irrad_range, step=global_step)
+
 
         # Checkpoint every 50 epochs
         if epoch % 50 == 0:

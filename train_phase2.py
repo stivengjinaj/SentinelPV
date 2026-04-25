@@ -14,14 +14,16 @@ NUM_SENTINELS = 30
 EPOCHS        = 50
 LR            = 0.25
 BATCH_SIZE    = 64
-STAGE1_CKPT   = "./training_history/train_pvgis2005_20022_30sentinels_50epochs/irradiance_stage1_final.pth"
-IRRAD_PATH    = "./training_history/train_pvgis2005_20022_30sentinels_50epochs/dataset/irradiance_train.npy"
-COORDS_PATH   = "./training_history/train_pvgis2005_20022_30sentinels_50epochs/dataset/coords.npy"
-RESULTS_DIR   = "./training_history/train_pvgis2005_20022_30sentinels_50epochs"
+RUN_NAME      = "train_pvgis2005_15sentinels_temporal"
+SAVE_DIR      = f"./training_history/{RUN_NAME}"
+STAGE1_CKPT   = f"{SAVE_DIR}/irradiance_stage1_final.pth"
+IRRAD_PATH    = f"{SAVE_DIR}/dataset/irradiance_train.npy"
+COORDS_PATH   = f"{SAVE_DIR}/dataset/coords.npy"
+RESULTS_DIR   = f"{SAVE_DIR}"
 
 WANDB_PROJECT  = "physense-irradiance"
 WANDB_ENTITY   = "stivengjinaj-politecnico-di-torino"
-WANDB_RUN_NAME = "train_pvgis2005_20022_30sentinels_50epochs-stage2"
+WANDB_RUN_NAME = f"{RUN_NAME}-stage2"
 
 TELEGRAM_TOKEN = "8647539434:AAGQ4Ik9OVVEd0Z0QhlDBHpAyTjnrIUmTms"
 TELEGRAM_CHAT_ID = "6694449067"
@@ -45,60 +47,48 @@ def tg_notify(msg: str):
 def sample_idw(
     query_pos:   torch.Tensor,   # (B, S, 2)
     grid_pos:    torch.Tensor,   # (B, N, 2)
-    grid_values: torch.Tensor,   # (B, N, 1)
+    grid_values: torch.Tensor,   # (B, N, C)  C is T_in or 1
     power: float = 2.0,
     eps:   float = 1e-6,
-) -> torch.Tensor:
-    """
-    Inverse-Distance Weighting interpolation.
-    Estimates irradiance at floating sentinel positions as a weighted average
-    of neighbouring panel values. Fully differentiable w.r.t. query_pos.
-
-    Returns: sampled (B, S, 1)
-    """
-    dist    = torch.cdist(query_pos, grid_pos)             # (B, S, N)
+) -> torch.Tensor:               # (B, S, C)
+    dist    = torch.cdist(query_pos, grid_pos)
     weights = 1.0 / (dist ** power + eps)
-    weights = weights / weights.sum(dim=-1, keepdim=True)  # normalise
-    return torch.bmm(weights, grid_values)                 # (B, S, 1)
+    weights = weights / weights.sum(dim=-1, keepdim=True)
+    return torch.bmm(weights, grid_values)
 
 
 # Flow-matching loss at given sentinel positions
 def flow_loss_for_sentinels(
     model:        IrradianceModel,
     batch:        dict,
-    sentinel_pos: torch.Tensor,   # (S, 2) — differentiable
+    sentinel_pos: torch.Tensor,
     device:       torch.device,
 ) -> torch.Tensor:
-    """
-    Mirrors IrradianceModel.forward() but uses externally supplied sentinel
-    positions so gradients propagate into sentinel_pos.
-    """
-    pos = batch['pos'].to(device)   # (B, N, 2)
-    y   = batch['y'].to(device)     # (B, N, 1)
-    B, N, _ = y.shape
 
-    # Flow interpolation
-    u    = torch.randn(B, device=device)
-    t    = torch.sigmoid(u)
-    t_bc = t.view(B, 1, 1)
-    noise  = torch.randn_like(y)
-    y_t    = t_bc * y + (1. - t_bc) * noise
-    target = y - noise
+    pos   = batch['pos'].to(device)    # (B, N, 2)
+    x_seq = batch['x_seq'].to(device)  # (B, N, T_in)
+    y_seq = batch['y_seq'].to(device)  # (B, N, T_out)
+    B, N, _ = y_seq.shape
 
-    # Field tokens
-    ref_d = model._ref_grid_distances(pos)
-    x     = torch.cat([pos, y_t, ref_d], dim=-1)
-    fx    = model.preprocess(x) + model.placeholder[None, None, :]
+    u      = torch.randn(B, device=device)
+    t      = torch.sigmoid(u)
+    t_bc   = t.view(B, 1, 1)
+    noise  = torch.randn_like(y_seq)
+    y_t    = t_bc * y_seq + (1. - t_bc) * noise
+    target = y_seq - noise
 
-    # Sentinel sensor features (differentiable path through IDW)
+    ref_d  = model._ref_grid_distances(pos)
+    x_raw  = torch.cat([pos, y_t, ref_d], dim=-1)
+    fx     = model.preprocess(x_raw) + model.placeholder[None, None, :]
+    fx     = fx + model.temporal_encoder(x_seq)
+
     s_pos_batch = sentinel_pos.unsqueeze(0).expand(B, -1, -1)   # (B, S, 2)
-    s_y         = sample_idw(s_pos_batch, pos, y)                # (B, S, 1)
-    sensor_feat = torch.cat([s_pos_batch, s_y], dim=-1)          # (B, S, 3)
+    s_seq       = sample_idw(s_pos_batch, pos, x_seq)            # (B, S, T_in)
+    sensor_feat = torch.cat([s_pos_batch, s_seq], dim=-1)        # (B, S, 14)
 
     s    = model.sensor_encoder(sensor_feat)
     s2   = model.sensor_encoder_2(sensor_feat)
     t_emb = model.t_embedder(t) + s2.mean(dim=1)
-
     x_out = model.transformer(fx, t_emb, s)
     pred  = model.mlp_head(x_out, t_emb)
 
@@ -133,8 +123,13 @@ def optimise():
 
     # Frozen Stage 1 model
     model = IrradianceModel(
-        space_dim=2, fun_dim=1, out_dim=1,
-        n_layers=12, n_hidden=374, slice_num=32,
+        space_dim = 2,
+        fun_dim   = 1,
+        out_dim   = 24,
+        t_in      = 12,
+        n_layers  = 12,
+        n_hidden  = 374,
+        slice_num = 32,
     ).to(device)
     model.load_state_dict(torch.load(STAGE1_CKPT, map_location=device))
     model.eval()

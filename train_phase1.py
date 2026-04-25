@@ -5,21 +5,21 @@ import torch
 import torch.optim as optim
 import wandb
 from torch.optim.lr_scheduler import CosineAnnealingLR, LinearLR, SequentialLR
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, WeightedRandomSampler
 
 from datasets.IrradianceDataset import IrradianceDataset
 from models.transolver_pv import IrradianceModel
 
-EPOCHS      = 300
+EPOCHS      = 50
 BATCH_SIZE  = 128
-LR          = 1e-4
-SAVE_DIR    = "./training_history/train_pvgis2005_30sentinels_64slice"
-IRRAD_PATH  = "datasets/irradiance_train.npy"
-COORDS_PATH = "datasets/coords.npy"
+LR          = 3e-4
+SAVE_DIR    = "./training_history/train_pvgis2005_20022_30sentinels_50epochs"
+IRRAD_PATH  = "./training_history/train_pvgis2005_20022_30sentinels_50epochs/dataset/irradiance_train.npy"
+COORDS_PATH = "./training_history/train_pvgis2005_20022_30sentinels_50epochs/dataset/coords.npy"
 
 WANDB_PROJECT  = "physense-irradiance"
 WANDB_ENTITY   = "stivengjinaj-politecnico-di-torino"
-WANDB_RUN_NAME = "train_pvgis2005_30sentinels_64slice-stage1"
+WANDB_RUN_NAME = "train_pvgis2005_2022_30sentinels_50epochs-stage1"
 
 TELEGRAM_TOKEN = "8647539434:AAGQ4Ik9OVVEd0Z0QhlDBHpAyTjnrIUmTms"
 TELEGRAM_CHAT_ID = "6694449067"
@@ -45,8 +45,17 @@ def train():
     print(f"Device: {device}")
 
     dataset = IrradianceDataset(IRRAD_PATH, COORDS_PATH)
-    loader  = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True,
-                         num_workers=4, pin_memory=True)
+
+    mean_irr     = dataset.y_data.mean(dim=1).squeeze()          # (T,)
+    bins         = torch.quantile(mean_irr, torch.linspace(0, 1, 5))
+    bin_ids      = torch.bucketize(mean_irr, bins[1:-1])          # 4 buckets: 0,1,2,3
+    class_counts = torch.bincount(bin_ids)
+    weights      = 1.0 / class_counts[bin_ids].float()
+    sampler      = WeightedRandomSampler(weights, len(weights), replacement=True)
+
+    loader = DataLoader(dataset, batch_size=BATCH_SIZE, sampler=sampler,
+                        num_workers=4, pin_memory=True)
+    
     N = dataset.pos_tensor.shape[0]
     T = len(dataset)
     print(f"Dataset: {T} timesteps | {N} panels")

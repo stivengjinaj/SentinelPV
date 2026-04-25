@@ -14,14 +14,14 @@ NUM_SENTINELS = 30
 EPOCHS        = 50
 LR            = 0.25
 BATCH_SIZE    = 64
-STAGE1_CKPT   = "./training_history/train_pvgis2005_30sentinels_64slice/irradiance_stage1_final.pth"
-IRRAD_PATH    = "./training_history/train_pvgis2005_30sentinels_64slice/dataset/irradiance_train.npy"
-COORDS_PATH   = "./training_history/train_pvgis2005_30sentinels_64slice/dataset/coords.npy"
-RESULTS_DIR   = "./training_history/train_pvgis2005_30sentinels_64slice"
+STAGE1_CKPT   = "./training_history/train_pvgis2005_20022_30sentinels_50epochs/irradiance_stage1_final.pth"
+IRRAD_PATH    = "./training_history/train_pvgis2005_20022_30sentinels_50epochs/dataset/irradiance_train.npy"
+COORDS_PATH   = "./training_history/train_pvgis2005_20022_30sentinels_50epochs/dataset/coords.npy"
+RESULTS_DIR   = "./training_history/train_pvgis2005_20022_30sentinels_50epochs"
 
 WANDB_PROJECT  = "physense-irradiance"
 WANDB_ENTITY   = "stivengjinaj-politecnico-di-torino"
-WANDB_RUN_NAME = "train_pvgis2005_30sentinels_64slice-stage2"
+WANDB_RUN_NAME = "train_pvgis2005_20022_30sentinels_50epochs-stage2"
 
 TELEGRAM_TOKEN = "8647539434:AAGQ4Ik9OVVEd0Z0QhlDBHpAyTjnrIUmTms"
 TELEGRAM_CHAT_ID = "6694449067"

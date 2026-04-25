@@ -1,0 +1,103 @@
+nohup: ignoring input
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from /home/sgjinaj/.netrc.
+wandb: Currently logged in as: stivengjinaj (stivengjinaj-politecnico-di-torino) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: setting up run szdsjks8
+wandb: Tracking run with wandb version 0.25.1
+wandb: Run data is saved locally in /home/sgjinaj/SentinelPV_Physense/wandb/run-20260422_091812-szdsjks8
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run train_pvgis2005_2022_30sentinels_50epochs-stage1
+wandb: ⭐️ View project at https://wandb.ai/stivengjinaj-politecnico-di-torino/physense-irradiance
+wandb: 🚀 View run at https://wandb.ai/stivengjinaj-politecnico-di-torino/physense-irradiance/runs/szdsjks8
+Device: cuda
+Dataset: 71849 timesteps | 1149 panels
+Trainable parameters: 13,522,759
+Starting Stage 1 training...
+Epoch    1/50 | Loss: 0.83054 | LR: 3.27e-05 | Skipped: 0 | Time: 231.7s
+Epoch    2/50 | Loss: 0.08220 | LR: 6.24e-05 | Skipped: 0 | Time: 231.8s
+Epoch    3/50 | Loss: 0.05494 | LR: 9.21e-05 | Skipped: 0 | Time: 231.7s
+Epoch    4/50 | Loss: 0.04818 | LR: 1.22e-04 | Skipped: 0 | Time: 231.9s
+Epoch    5/50 | Loss: 0.04230 | LR: 1.51e-04 | Skipped: 0 | Time: 231.9s
+Epoch    6/50 | Loss: 0.03912 | LR: 1.81e-04 | Skipped: 0 | Time: 231.8s
+Epoch    7/50 | Loss: 0.03719 | LR: 2.11e-04 | Skipped: 0 | Time: 231.8s
+Epoch    8/50 | Loss: 0.03506 | LR: 2.41e-04 | Skipped: 0 | Time: 231.8s
+Epoch    9/50 | Loss: 0.03393 | LR: 2.70e-04 | Skipped: 0 | Time: 231.7s
+Epoch   10/50 | Loss: 0.03321 | LR: 3.00e-04 | Skipped: 0 | Time: 231.8s
+Epoch   11/50 | Loss: 0.03135 | LR: 3.00e-04 | Skipped: 0 | Time: 231.6s
+Epoch   12/50 | Loss: 0.03055 | LR: 2.98e-04 | Skipped: 0 | Time: 232.0s
+Epoch   13/50 | Loss: 0.02940 | LR: 2.96e-04 | Skipped: 0 | Time: 231.8s
+Epoch   14/50 | Loss: 0.02798 | LR: 2.93e-04 | Skipped: 0 | Time: 231.8s
+Epoch   15/50 | Loss: 0.02711 | LR: 2.89e-04 | Skipped: 0 | Time: 231.8s
+Epoch   16/50 | Loss: 0.02586 | LR: 2.84e-04 | Skipped: 0 | Time: 231.7s
+Epoch   17/50 | Loss: 0.02509 | LR: 2.78e-04 | Skipped: 0 | Time: 231.8s
+Epoch   18/50 | Loss: 0.02420 | LR: 2.71e-04 | Skipped: 0 | Time: 231.8s
+Epoch   19/50 | Loss: 0.02297 | LR: 2.64e-04 | Skipped: 0 | Time: 231.8s
+Epoch   20/50 | Loss: 0.02209 | LR: 2.56e-04 | Skipped: 0 | Time: 231.8s
+Epoch   21/50 | Loss: 0.02188 | LR: 2.48e-04 | Skipped: 0 | Time: 231.8s
+Epoch   22/50 | Loss: 0.02079 | LR: 2.38e-04 | Skipped: 0 | Time: 231.7s
+Epoch   23/50 | Loss: 0.02117 | LR: 2.29e-04 | Skipped: 0 | Time: 231.8s
+Epoch   24/50 | Loss: 0.02039 | LR: 2.18e-04 | Skipped: 0 | Time: 231.8s
+Epoch   25/50 | Loss: 0.01998 | LR: 2.08e-04 | Skipped: 0 | Time: 231.9s
+Epoch   26/50 | Loss: 0.01952 | LR: 1.97e-04 | Skipped: 0 | Time: 231.9s
+Epoch   27/50 | Loss: 0.01908 | LR: 1.85e-04 | Skipped: 0 | Time: 232.0s
+Epoch   28/50 | Loss: 0.01891 | LR: 1.74e-04 | Skipped: 0 | Time: 231.9s
+Epoch   29/50 | Loss: 0.01878 | LR: 1.62e-04 | Skipped: 0 | Time: 231.9s
+Epoch   30/50 | Loss: 0.01852 | LR: 1.50e-04 | Skipped: 0 | Time: 231.8s
+Epoch   31/50 | Loss: 0.01798 | LR: 1.39e-04 | Skipped: 0 | Time: 232.0s
+Epoch   32/50 | Loss: 0.01851 | LR: 1.27e-04 | Skipped: 0 | Time: 231.8s
+Epoch   33/50 | Loss: 0.01771 | LR: 1.16e-04 | Skipped: 0 | Time: 232.1s
+Epoch   34/50 | Loss: 0.01808 | LR: 1.04e-04 | Skipped: 0 | Time: 231.9s
+Epoch   35/50 | Loss: 0.01755 | LR: 9.33e-05 | Skipped: 0 | Time: 231.9s
+Epoch   36/50 | Loss: 0.01735 | LR: 8.26e-05 | Skipped: 0 | Time: 232.0s
+Epoch   37/50 | Loss: 0.01768 | LR: 7.24e-05 | Skipped: 0 | Time: 231.9s
+Epoch   38/50 | Loss: 0.01718 | LR: 6.26e-05 | Skipped: 0 | Time: 232.0s
+Epoch   39/50 | Loss: 0.01701 | LR: 5.34e-05 | Skipped: 0 | Time: 231.9s
+Epoch   40/50 | Loss: 0.01684 | LR: 4.48e-05 | Skipped: 0 | Time: 232.2s
+Epoch   41/50 | Loss: 0.01633 | LR: 3.68e-05 | Skipped: 0 | Time: 232.3s
+Epoch   42/50 | Loss: 0.01678 | LR: 2.96e-05 | Skipped: 0 | Time: 232.2s
+Epoch   43/50 | Loss: 0.01647 | LR: 2.30e-05 | Skipped: 0 | Time: 232.1s
+Epoch   44/50 | Loss: 0.01641 | LR: 1.73e-05 | Skipped: 0 | Time: 232.2s
+Epoch   45/50 | Loss: 0.01646 | LR: 1.24e-05 | Skipped: 0 | Time: 232.0s
+Epoch   46/50 | Loss: 0.01644 | LR: 8.32e-06 | Skipped: 0 | Time: 232.2s
+Epoch   47/50 | Loss: 0.01639 | LR: 5.13e-06 | Skipped: 0 | Time: 232.3s
+Epoch   48/50 | Loss: 0.01619 | LR: 2.84e-06 | Skipped: 0 | Time: 232.2s
+Epoch   49/50 | Loss: 0.01615 | LR: 1.46e-06 | Skipped: 0 | Time: 232.3s
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+wandb: updating run metadata
+wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml; uploading training_history/train_pvgis2005_20022_30sentinels_50epochs/irradiance_stage1_ep50.pth
+wandb: uploading wandb-summary.json; uploading training_history/train_pvgis2005_20022_30sentinels_50epochs/irradiance_stage1_ep50.pth; uploading training_history/train_pvgis2005_20022_30sentinels_50epochs/irradiance_stage1_final.pth
+wandb: uploading training_history/train_pvgis2005_20022_30sentinels_50epochs/irradiance_stage1_ep50.pth; uploading training_history/train_pvgis2005_20022_30sentinels_50epochs/irradiance_stage1_final.pth
+wandb: uploading training_history/train_pvgis2005_20022_30sentinels_50epochs/irradiance_stage1_ep50.pth; uploading training_history/train_pvgis2005_20022_30sentinels_50epochs/irradiance_stage1_final.pth; uploading history steps 28086-28099, summary, console lines 50-55
+wandb: uploading training_history/train_pvgis2005_20022_30sentinels_50epochs/irradiance_stage1_ep50.pth; uploading training_history/train_pvgis2005_20022_30sentinels_50epochs/irradiance_stage1_final.pth
+wandb: uploading training_history/train_pvgis2005_20022_30sentinels_50epochs/irradiance_stage1_ep50.pth
+wandb: uploading data
+wandb: 
+wandb: Run history:
+wandb:                 epoch ▁▁▁▁▂▂▂▂▂▃▃▃▃▃▄▄▄▄▄▄▅▅▅▅▅▆▆▆▆▆▆▇▇▇▇▇▇███
+wandb:      train/epoch_loss █▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:    train/epoch_time_s ▂▃▂▃▄▃▃▂▃▁▃▃▃▂▃▂▃▃▂▃▄▃▅▃▃▂▆▄▄▅▅▄▇█▅▅▇█▇▇
+wandb:       train/grad_norm ▆█▃▆▄▂▂▂▂▁▁▁▂▁▁▁▁▁▁▁▁▁▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:   train/learning_rate ▂▂▃▄▅▆▇▇█████▇▇▇▇▇▆▆▆▅▅▅▄▄▄▃▃▃▂▂▂▂▂▁▁▁▁▁
+wandb: train/skipped_batches ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:       train/step_loss ▇█▅█▄▅▄▆▄▄▅▄▂▃▄▃▃▃▃▄▃▂▂▃▂▃▂▂▂▂▂▂▁▃▂▁▃▁▃▃
+wandb: 
+wandb: Run summary:
+wandb:                 epoch 50
+wandb:      final_train_loss 0.01582
+wandb:          total_epochs 50
+wandb:           total_steps 28100
+wandb:      train/epoch_loss 0.01582
+wandb:    train/epoch_time_s 232.21559
+wandb:       train/grad_norm 0.06145
+wandb:   train/learning_rate 0.0
+wandb: train/skipped_batches 0
+wandb:       train/step_loss 0.01892
+wandb: 
+wandb: 🚀 View run train_pvgis2005_2022_30sentinels_50epochs-stage1 at: https://wandb.ai/stivengjinaj-politecnico-di-torino/physense-irradiance/runs/szdsjks8
+wandb: ⭐️ View project at: https://wandb.ai/stivengjinaj-politecnico-di-torino/physense-irradiance
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 2 other file(s)
+wandb: Find logs at: ./wandb/run-20260422_091812-szdsjks8/logs
+Epoch   50/50 | Loss: 0.01582 | LR: 1.00e-06 | Skipped: 0 | Time: 232.2s
+  Checkpoint saved: ./training_history/train_pvgis2005_20022_30sentinels_50epochs/irradiance_stage1_ep50.pth
+
+Done. Final checkpoint: ./training_history/train_pvgis2005_20022_30sentinels_50epochs/irradiance_stage1_final.pth

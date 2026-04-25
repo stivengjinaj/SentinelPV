@@ -8,13 +8,14 @@ import pandas as pd
 
 from models.transolver_pv import IrradianceModel
 
-STAGE1_CKPT     = "training_history/train_pvgis2005_2022_30sentinels/irradiance_stage1_final.pth"
-SENTINEL_PATH   = "training_history/train_pvgis2005_2022_30sentinels/sentinel_panels.npy"
-COORDS_PATH     = "training_history/train_pvgis2005_2022_30sentinels/dataset/coords.npy"
-PANEL_IDS_PATH  = "training_history/train_pvgis2005_2022_30sentinels/dataset/panel_ids.npy"
+TRAINING_PATH   = "training_history/train_pvgis2005_2022_15sentinels"
+STAGE1_CKPT     = f"{TRAINING_PATH}/irradiance_stage1_final.pth"
+SENTINEL_PATH   = f"{TRAINING_PATH}/sentinel_panels.npy"
+COORDS_PATH     = f"{TRAINING_PATH}/dataset/coords.npy"
+PANEL_IDS_PATH  = f"{TRAINING_PATH}/dataset/panel_ids.npy"
 
 IRRAD_MIN = 0.0       # W/m2
-IRRAD_MAX = 1094.0    # W/m2
+IRRAD_MAX = 1108.010010    # W/m2
 
 class IrradianceReconstructor:
     def __init__(
@@ -171,7 +172,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.constants:
-        print_norm_constants("datasets/irradiance_train.npy", "datasets/coords.npy")
+        print_norm_constants(f"{TRAINING_PATH}/dataset/irradiance_train.npy", f"{TRAINING_PATH}/dataset/coords.npy")
     elif args.nc:
         _test(args.nc, args.timestep, export=args.export)
     else:

@@ -1,0 +1,130 @@
+nohup: ignoring input
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from /home/sgjinaj/.netrc.
+wandb: Currently logged in as: stivengjinaj (stivengjinaj-politecnico-di-torino) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: setting up run zn9msvpw
+wandb: Tracking run with wandb version 0.25.1
+wandb: Run data is saved locally in /home/sgjinaj/SentinelPV_Physense/wandb/run-20260422_123355-zn9msvpw
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run train_pvgis2005_20022_30sentinels_50epochs-stage2
+wandb: ⭐️ View project at https://wandb.ai/stivengjinaj-politecnico-di-torino/physense-irradiance
+wandb: 🚀 View run at https://wandb.ai/stivengjinaj-politecnico-di-torino/physense-irradiance/runs/zn9msvpw
+Device: cuda
+Dataset: 71849 timesteps | 1149 panels
+Stage 1 checkpoint loaded: ./training_history/train_pvgis2005_20022_30sentinels_50epochs/irradiance_stage1_final.pth
+
+Starting Stage 2: optimising 30 sentinel positions...
+
+Epoch   1/50 | Flow loss: 0.030553
+Epoch   2/50 | Flow loss: 0.030543
+Epoch   3/50 | Flow loss: 0.031002
+Epoch   4/50 | Flow loss: 0.030171
+Epoch   5/50 | Flow loss: 0.031030
+Epoch   6/50 | Flow loss: 0.030490
+Epoch   7/50 | Flow loss: 0.030944
+Epoch   8/50 | Flow loss: 0.031029
+Epoch   9/50 | Flow loss: 0.030751
+Epoch  10/50 | Flow loss: 0.030712
+Epoch  11/50 | Flow loss: 0.031226
+Epoch  12/50 | Flow loss: 0.031027
+Epoch  13/50 | Flow loss: 0.030666
+Epoch  14/50 | Flow loss: 0.030983
+Epoch  15/50 | Flow loss: 0.030279
+Epoch  16/50 | Flow loss: 0.030192
+Epoch  17/50 | Flow loss: 0.030806
+Epoch  18/50 | Flow loss: 0.030140
+Epoch  19/50 | Flow loss: 0.030639
+Epoch  20/50 | Flow loss: 0.030824
+Epoch  21/50 | Flow loss: 0.030838
+Epoch  22/50 | Flow loss: 0.030564
+Epoch  23/50 | Flow loss: 0.031047
+Epoch  24/50 | Flow loss: 0.030884
+Epoch  25/50 | Flow loss: 0.030745
+Epoch  26/50 | Flow loss: 0.030721
+Epoch  27/50 | Flow loss: 0.030842
+Epoch  28/50 | Flow loss: 0.031104
+Epoch  29/50 | Flow loss: 0.030468
+Epoch  30/50 | Flow loss: 0.030991
+Epoch  31/50 | Flow loss: 0.030899
+Epoch  32/50 | Flow loss: 0.031174
+Epoch  33/50 | Flow loss: 0.030525
+Epoch  34/50 | Flow loss: 0.030911
+Epoch  35/50 | Flow loss: 0.030544
+Epoch  36/50 | Flow loss: 0.030324
+Epoch  37/50 | Flow loss: 0.030156
+Epoch  38/50 | Flow loss: 0.030998
+Epoch  39/50 | Flow loss: 0.030679
+Epoch  40/50 | Flow loss: 0.030982
+Epoch  41/50 | Flow loss: 0.030353
+Epoch  42/50 | Flow loss: 0.030275
+Epoch  43/50 | Flow loss: 0.030461
+Epoch  44/50 | Flow loss: 0.030114
+Epoch  45/50 | Flow loss: 0.030244
+Epoch  46/50 | Flow loss: 0.030330
+Epoch  47/50 | Flow loss: 0.030914
+Epoch  48/50 | Flow loss: 0.030500
+Epoch  49/50 | Flow loss: 0.030260
+wandb: WARNING Symlinked 1 file into the W&B run directory; call wandb.save again to sync new files.
+wandb: uploading artifact run-zn9msvpw-sentinelspositions_ep50-zZlWzw; uploading artifact run-zn9msvpw-sentinelsfinal_positions-Us_6yQ; updating run metadata
+wandb: uploading artifact run-zn9msvpw-sentinelspositions_ep50-zZlWzw; uploading artifact run-zn9msvpw-sentinelsfinal_positions-Us_6yQ
+wandb: uploading artifact run-zn9msvpw-sentinelspositions_ep50-zZlWzw; uploading artifact run-zn9msvpw-sentinelsfinal_positions-Us_6yQ; uploading training_history/train_pvgis2005_20022_30sentinels_50epochs/sentinel_panels.npy; uploading output.log; uploading wandb-summary.json (+ 3 more)
+wandb: uploading artifact run-zn9msvpw-sentinelspositions_ep50-zZlWzw; uploading artifact run-zn9msvpw-sentinelsfinal_positions-Us_6yQ
+wandb: uploading artifact run-zn9msvpw-sentinelspositions_ep50-zZlWzw; uploading history steps 56136-56150, summary, console lines 52-89
+wandb: uploading artifact run-zn9msvpw-sentinelspositions_ep50-zZlWzw
+wandb: uploading data
+wandb: 
+wandb: Run history:
+wandb:          epoch ▁▁▁▂▂▂▂▂▂▃▃▃▃▃▃▄▄▄▄▄▅▅▅▅▅▆▆▆▆▆▆▇▇▇▇▇▇███
+wandb: opt/epoch_loss ▄▄▇▇▃▇▅▅█▇▆▂▁▅▁▅▆▄▇▆▅▆▇▃▆█▃▆▄▂▇▄▂▂▃▂▂▆▃▅
+wandb:  opt/grad_norm ▂▂▂▂▂▂▁▂▂▃▁▂▂▁▃▂▁▂▃▂▁▁▂▁▁▂▄▃▁▂▁▁▃▁█▂▂▁▁▂
+wandb:  opt/step_loss ▃▄▁▃▂▃▃▂▅▂▁▄▃▂▄▃▄▂▂▂▂▁▂▂█▁▃▆▂▄▁▃▃▃▄▃▁▃▂▁
+wandb: 
+wandb: Run summary:
+wandb:          epoch 50
+wandb: final_opt_loss 0.03072
+wandb:  num_sentinels 30
+wandb: opt/epoch_loss 0.03072
+wandb:  opt/grad_norm 0.01844
+wandb:  opt/step_loss 0.03405
+wandb:    result_path ./training_history/t...
+wandb: 
+wandb: 🚀 View run train_pvgis2005_20022_30sentinels_50epochs-stage2 at: https://wandb.ai/stivengjinaj-politecnico-di-torino/physense-irradiance/runs/zn9msvpw
+wandb: ⭐️ View project at: https://wandb.ai/stivengjinaj-politecnico-di-torino/physense-irradiance
+wandb: Synced 5 W&B file(s), 7 media file(s), 14 artifact file(s) and 1 other file(s)
+wandb: Find logs at: ./wandb/run-20260422_123355-zn9msvpw/logs
+Epoch  50/50 | Flow loss: 0.030723
+
+=======================================================
+  Optimisation complete — 30 sentinel panels found
+=======================================================
+  Sentinel  1: panel #682  lat=45.14597  lon=6.65667
+  Sentinel  2: panel #1146  lat=46.47331  lon=8.35885
+  Sentinel  3: panel #5  lat=44.12148  lon=7.25997
+  Sentinel  4: panel #1146  lat=46.47331  lon=8.35885
+  Sentinel  5: panel #33  lat=44.20738  lon=7.00712
+  Sentinel  6: panel #5  lat=44.12148  lon=7.25997
+  Sentinel  7: panel #682  lat=45.14597  lon=6.65667
+  Sentinel  8: panel #682  lat=45.14597  lon=6.65667
+  Sentinel  9: panel #1146  lat=46.47331  lon=8.35885
+  Sentinel 10: panel #950  lat=45.61069  lon=7.53513
+  Sentinel 11: panel #901  lat=45.48492  lon=8.81803
+  Sentinel 12: panel #682  lat=45.14597  lon=6.65667
+  Sentinel 13: panel #1146  lat=46.47331  lon=8.35885
+  Sentinel 14: panel #5  lat=44.12148  lon=7.25997
+  Sentinel 15: panel #5  lat=44.12148  lon=7.25997
+  Sentinel 16: panel #682  lat=45.14597  lon=6.65667
+  Sentinel 17: panel #5  lat=44.12148  lon=7.25997
+  Sentinel 18: panel #5  lat=44.12148  lon=7.25997
+  Sentinel 19: panel #1146  lat=46.47331  lon=8.35885
+  Sentinel 20: panel #682  lat=45.14597  lon=6.65667
+  Sentinel 21: panel #682  lat=45.14597  lon=6.65667
+  Sentinel 22: panel #682  lat=45.14597  lon=6.65667
+  Sentinel 23: panel #1146  lat=46.47331  lon=8.35885
+  Sentinel 24: panel #1126  lat=46.29158  lon=8.10131
+  Sentinel 25: panel #1126  lat=46.29158  lon=8.10131
+  Sentinel 26: panel #1146  lat=46.47331  lon=8.35885
+  Sentinel 27: panel #5  lat=44.12148  lon=7.25997
+  Sentinel 28: panel #682  lat=45.14597  lon=6.65667
+  Sentinel 29: panel #682  lat=45.14597  lon=6.65667
+  Sentinel 30: panel #5  lat=44.12148  lon=7.25997
+
+  Saved to: ./training_history/train_pvgis2005_20022_30sentinels_50epochs/sentinel_panels.npy
